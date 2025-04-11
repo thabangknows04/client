@@ -1076,7 +1076,7 @@ const paginatedGuests = filteredGuests.slice(
         )}
 
         {activeTab === "tickets" && (
-          <TicketsTab eventData={eventData} formatDate={formatDate} />
+          <TicketsTab setEventData={setEventData} eventData={eventData} formatDate={formatDate} />
         )}
 
         {activeTab === "analytics" && <AnalyticsTab />}
