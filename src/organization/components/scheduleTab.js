@@ -1,0 +1,708 @@
+import React, { useState } from "react";
+import { FiEdit, FiTrash2, FiPlus, FiClock, FiUser } from "react-icons/fi";
+
+const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
+  const [scheduleView, setScheduleView] = useState("board");
+  const [editingActivity, setEditingActivity] = useState(null);
+  const [editingSpeaker, setEditingSpeaker] = useState(null);
+
+  // Initialize with default empty arrays if not provided
+  const { schedule = [], speakers = [] } = eventData;
+
+  const [newActivity, setNewActivity] = useState({
+    startTime: "",
+    endTime: "",
+    activity: "",
+    speakerId: "",
+    description: ""
+  });
+
+  const [newSpeaker, setNewSpeaker] = useState({
+    name: "",
+    title: "",
+    company: "",
+    bio: ""
+  });
+
+  const [showActivityForm, setShowActivityForm] = useState(false);
+  const [showSpeakerForm, setShowSpeakerForm] = useState(false);
+
+  // Handle activity form input changes
+  const handleActivityChange = (e) => {
+    const { name, value } = e.target;
+    if (editingActivity !== null) {
+      setEditingActivity({
+        ...editingActivity,
+        [name]: value
+      });
+    } else {
+      setNewActivity({
+        ...newActivity,
+        [name]: value
+      });
+    }
+  };
+
+  // Handle speaker form input changes
+  const handleSpeakerChange = (e) => {
+    const { name, value } = e.target;
+    if (editingSpeaker !== null) {
+      setEditingSpeaker({
+        ...editingSpeaker,
+        [name]: value
+      });
+    } else {
+      setNewSpeaker({
+        ...newSpeaker,
+        [name]: value
+      });
+    }
+  };
+
+  // Add or update activity
+  const handleActivitySubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      let updatedSchedule = [...schedule];
+      const activityData = editingActivity !== null ? editingActivity : newActivity;
+      
+      // Prepare the payload for backend
+      const payload = {
+        ...activityData,
+        // For backend, we might want to use speakerId instead of speaker name
+        speaker: speakers.find(s => s.id === activityData.speakerId)?.name || ""
+      };
+
+      if (editingActivity !== null) {
+        // Update existing activity
+        const index = updatedSchedule.findIndex(a => a.id === editingActivity.id);
+        if (index !== -1) {
+          updatedSchedule[index] = payload;
+        }
+      } else {
+        // Add new activity
+        updatedSchedule.push({
+          ...payload,
+          id: Date.now().toString() // Temporary ID, will be replaced by backend
+        });
+      }
+      
+      // Call the update function with the new data
+      await onEventUpdate({
+        ...eventData,
+        schedule: updatedSchedule
+      });
+      
+      resetActivityForm();
+    } catch (error) {
+      console.error("Failed to update activities:", error);
+      // You might want to add error handling here
+    }
+  };
+
+  // Add or update speaker
+  const handleSpeakerSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      let updatedSpeakers = [...speakers];
+      
+      if (editingSpeaker !== null) {
+        // Update existing speaker
+        const index = updatedSpeakers.findIndex(s => s.id === editingSpeaker.id);
+        if (index !== -1) {
+          updatedSpeakers[index] = editingSpeaker;
+        }
+      } else {
+        // Add new speaker
+        updatedSpeakers.push({
+          ...newSpeaker,
+          id: Date.now().toString() // Temporary ID, will be replaced by backend
+        });
+      }
+      
+      // Call the update function with the new data
+      await onEventUpdate({
+        ...eventData,
+        speakers: updatedSpeakers
+      });
+      
+      resetSpeakerForm();
+    } catch (error) {
+      console.error("Failed to update speakers:", error);
+      // You might want to add error handling here
+    }
+  };
+
+  // Delete activity
+  const handleDeleteActivity = async (id) => {
+    if (window.confirm("Are you sure you want to delete this activity?")) {
+      try {
+        const updatedSchedule = schedule.filter(a => a.id !== id);
+        await onEventUpdate({
+          ...eventData,
+          schedule: updatedSchedule
+        });
+      } catch (error) {
+        console.error("Failed to delete activity:", error);
+      }
+    }
+  };
+
+  // Delete speaker
+  const handleDeleteSpeaker = async (id) => {
+    if (window.confirm("Are you sure you want to delete this speaker?")) {
+      try {
+        // First remove this speaker from any activities
+        const updatedSchedule = schedule.map(activity => {
+          if (activity.speakerId === id) {
+            return {
+              ...activity,
+              speakerId: "",
+              speaker: ""
+            };
+          }
+          return activity;
+        });
+
+        const updatedSpeakers = speakers.filter(s => s.id !== id);
+        
+        await onEventUpdate({
+          ...eventData,
+          schedule: updatedSchedule,
+          speakers: updatedSpeakers
+        });
+      } catch (error) {
+        console.error("Failed to delete speaker:", error);
+      }
+    }
+  };
+
+  // Prepare to edit activity
+  const handleEditActivity = (activity) => {
+    setEditingActivity({
+      ...activity,
+      speakerId: activity.speakerId || speakers.find(s => s.name === activity.speaker)?.id || ""
+    });
+    setShowActivityForm(true);
+  };
+
+  // Prepare to edit speaker
+  const handleEditSpeaker = (speaker) => {
+    setEditingSpeaker(speaker);
+    setShowSpeakerForm(true);
+  };
+
+  // Reset activity form
+  const resetActivityForm = () => {
+    setNewActivity({
+      startTime: "",
+      endTime: "",
+      activity: "",
+      speakerId: "",
+      description: ""
+    });
+    setEditingActivity(null);
+    setShowActivityForm(false);
+  };
+
+  // Reset speaker form
+  const resetSpeakerForm = () => {
+    setNewSpeaker({
+      name: "",
+      title: "",
+      company: "",
+      bio: ""
+    });
+    setEditingSpeaker(null);
+    setShowSpeakerForm(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setScheduleView("board")}
+            className={`px-4 py-2 rounded-lg ${
+              scheduleView === "board"
+                ? "border border-blue-900 text-blue-900"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            Board View
+          </button>
+          <button
+            onClick={() => setScheduleView("list")}
+            className={`px-4 py-2 rounded-lg ${
+              scheduleView === "list"
+                ? "border border-blue-900 text-blue-900"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            List View
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+             {/* Speakers Section */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Event Speakers</h3>
+            <button
+              onClick={() => {
+                resetSpeakerForm();
+                setShowSpeakerForm(true);
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700"
+            >
+              <FiPlus /> Add Speaker
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {speakers.map((speaker) => (
+              <div
+                key={speaker.id}
+                className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-lg flex items-center gap-2">
+                      <FiUser className="inline" />
+                      {speaker.name}
+                    </h4>
+                    <p className="text-gray-600 mt-1">
+                      {speaker.title} at {speaker.company}
+                    </p>
+                    {speaker.bio && (
+                  <p className="text-gray-600 mt-2 text-sm">
+                  {speaker.bio?.length > 120
+                    ? speaker.bio.substring(0, 120) + "..."
+                    : speaker.bio || "-"}
+                </p>
+                
+                    )}
+                  </div>
+
+
+
+                  
+
+
+                </div>
+                <div className="flex-end gap-2">
+                  
+
+
+
+                      <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                                <button
+                                   onClick={() => handleEditSpeaker(speaker)}
+                                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                >
+                                  <FiEdit className="w-4 h-4 mr-1.5" />
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSpeaker(speaker.id)}
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                >
+                                  <FiTrash2 className="w-4 h-4 mr-1.5" />
+                                  Delete
+                                </button>
+                              </div>
+
+
+
+                  </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        
+        
+        {/* Schedule Section */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold">Event Activities</h3>
+            <button
+              onClick={() => {
+                resetActivityForm();
+                setShowActivityForm(true);
+              }}
+              className="flex items-center gap-2 px-3 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700"
+            >
+              <FiPlus /> Add Activity
+            </button>
+          </div>
+
+          {scheduleView === "board" ? (
+            <div className="space-y-4">
+              {schedule.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium text-lg">{activity.activity}</h4>
+                      <p className="text-gray-600 flex items-center gap-2 mt-1">
+                        <FiClock className="inline" />
+                        {activity.startTime} - {activity.endTime}
+                      </p>
+                      {activity.description && (
+                        <p className="text-gray-600 mt-2 text-sm">
+                          {activity.description?.length > 120
+  ? activity.description.substring(0, 120) + "..."
+  : activity.description || "-"}
+
+                        </p>
+                      )}
+                      {activity.speaker && (
+                        <p className="text-gray-600 mt-1">
+                          Speaker: {activity.speaker}
+                        </p>
+                      )}
+                    </div>
+
+
+        
+
+
+
+
+                  </div>
+                  <div className="flex-end gap-2">
+                     
+
+
+
+                     <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                               <button
+                                 onClick={() => handleEditActivity(activity)}
+                                 className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                               >
+                                 <FiEdit className="w-4 h-4 mr-1.5" />
+                                 Edit
+                               </button>
+                               <button
+                                onClick={() => handleDeleteActivity(activity.id)}
+                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                               >
+                                 <FiTrash2 className="w-4 h-4 mr-1.5" />
+                                 Delete
+                               </button>
+                             </div>
+                 </div>
+
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Time
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Activity
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Description
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Speaker
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {schedule.map((activity) => (
+                    <tr key={activity.id}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {activity.startTime} - {activity.endTime}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {activity.activity}
+                      </td>
+                      <td className="px-6 py-4">
+                      {activity.description?.length > 80
+  ? activity.description.substring(0, 30) + "..."
+  : activity.description || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {activity.speaker || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    
+                     
+
+                                <button
+                                  onClick={() => handleEditActivity(activity)}
+                                  className="inline-flex items-center px-3 py-1.5 mr-3 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                >
+                                  <FiEdit className="w-4 h-4 mr-1.5" />
+                                  Edit
+                                </button>
+                                <button
+                                onClick={() => handleDeleteActivity(activity.id)}
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                >
+                                  <FiTrash2 className="w-4 h-4 mr-1.5" />
+                                  Delete
+                                </button>
+                              
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+   
+      </div>
+
+      {/* Activity Form Modal */}
+      {showActivityForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {editingActivity ? "Edit Activity" : "Add New Activity"}
+              </h3>
+              <button
+                onClick={resetActivityForm}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleActivitySubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Activity Title
+                </label>
+                <input
+                  type="text"
+                  name="activity"
+                  value={editingActivity ? editingActivity.activity : newActivity.activity}
+                  onChange={handleActivityChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={editingActivity ? editingActivity.startTime : newActivity.startTime}
+                    onChange={handleActivityChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={editingActivity ? editingActivity.endTime : newActivity.endTime}
+                    onChange={handleActivityChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={editingActivity ? editingActivity.description : newActivity.description}
+                  onChange={handleActivityChange}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Speaker
+                </label>
+                <select
+                  name="speakerId"
+                  value={editingActivity ? editingActivity.speakerId : newActivity.speakerId}
+                  onChange={handleActivityChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select Speaker</option>
+                  {speakers.map((speaker) => (
+                    <option key={speaker.id} value={speaker.id}>
+                      {speaker.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={resetActivityForm}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {editingActivity ? "Update Activity" : "Add Activity"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Speaker Form Modal */}
+      {showSpeakerForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                {editingSpeaker ? "Edit Speaker" : "Add New Speaker"}
+              </h3>
+              <button
+                onClick={resetSpeakerForm}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleSpeakerSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Speaker Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={editingSpeaker ? editingSpeaker.name : newSpeaker.name}
+                  onChange={handleSpeakerChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={editingSpeaker ? editingSpeaker.title : newSpeaker.title}
+                  onChange={handleSpeakerChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Company
+                </label>
+                <input
+                  type="text"
+                  name="company"
+                  value={editingSpeaker ? editingSpeaker.company : newSpeaker.company}
+                  onChange={handleSpeakerChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Bio
+                </label>
+                <textarea
+                  name="bio"
+                  value={editingSpeaker ? editingSpeaker.bio : newSpeaker.bio}
+                  onChange={handleSpeakerChange}
+                  rows="3"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={resetSpeakerForm}
+                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {editingSpeaker ? "Update Speaker" : "Add Speaker"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default ScheduleTab;

@@ -5,7 +5,11 @@ const CLICKUP_API_URL = process.env.CLICKUP_API_URL;
 
 
 // Store these securely in your app's configuration
-let accessToken = '';
+let accessToken = process.env.CLICKUP_ACCESS_TOKEN;
+// let teamId = '9012879816';
+// let spaceId = '90123569820-28';
+// let listId = '901209266721';
+
 let teamId = '';
 let spaceId = '';
 let listId = '';
