@@ -5,8 +5,14 @@ import axios from "axios";
 import { FiClock, FiEdit, FiTrash2, FiTag, FiPlus } from "react-icons/fi";
 import { confirmAlert } from "react-confirm-alert";
 import "react-confirm-alert/src/react-confirm-alert.css";
+import Notiflix from "notiflix";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+import { format } from 'date-fns';
+
+// ... your component code ...
+
 
 const TicketsTab = ({
   eventData,
@@ -22,7 +28,7 @@ const TicketsTab = ({
     quantity: "",
     availableUntil: "",
   });
-  const [editingTicket, setEditingTicket] = useState(null);
+  let [editingTicket, setEditingTicket] = useState(null);
   console.log("props in TicketsTab:", { eventData, setEventData });
 
   const openTicketForm = () => {
@@ -52,7 +58,11 @@ const TicketsTab = ({
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewTicket({ ...newTicket, [name]: value });
+    if (editingTicket) {
+      setEditingTicket({ ...editingTicket, [name]: value });
+    } else {
+      setNewTicket({ ...newTicket, [name]: value });
+    }
   };
 
   const handleEdit = (ticket) => {
@@ -63,49 +73,63 @@ const TicketsTab = ({
     }); // Format for input type="datetime-local"
     setShowTicketForm(true);
   };
-
-
   
+  
+  const formatDateForInput = (dateString) => {
+  try {
+    const date = new Date(dateString);
+    return format(date, 'yyyy-MM-dd\'T\'HH:mm');
+  } catch (error) {
+    console.error("Error formatting date for input:", error);
+    return ''; // Or handle the error as needed
+  }
+};
+
+
+  Notiflix.Confirm.init({
+    borderRadius: "7px",
+    uttonsStyling: true,
+    okButtonBackground: '#f70000',
+    titleColor: '#1d4079',
+    titleFontSize: '24px',
+    titleFontWeight: '900',
+  });
+
   const handleDelete = async (ticketId) => {
-    confirmAlert({
-      title: "Confirm to delete",
-      message: "Are you sure you want to delete this ticket type?",
-      buttons: [
-        {
-          label: "Yes",
-          onClick: async () => {
-            try {
-              const response = await axios.delete(
-                `http://localhost:5011/api/tickets/delete/${ticketId}`
-              );
-  
-              toast.success("Ticket type deleted successfully!");
-  
-              if (response.data.ticketTypes && setEventData) {
-                // Update eventData with the new ticketTypes
-                setEventData((prev) => ({
-                  ...prev,
-                  ticketTypes: response.data.ticketTypes,
-                }));
-              }
-  
-              if (onEventUpdated) {
-                onEventUpdated(); // Refresh parent if needed
-              }
-            } catch (error) {
-              console.error("Error deleting ticket type:", error);
-              toast.error("Failed to delete ticket type.");
-            }
-          },
-        },
-        {
-          label: "No",
-          onClick: () => {},
-        },
-      ],
-    });
+    Notiflix.Confirm.show(
+      "Confirm Deletion",
+      "Are you sure you want to delete this ticket type?",
+      "Yes",
+      "No",
+      async () => {
+        try {
+          const response = await axios.delete(
+            `http://localhost:5011/api/tickets/delete/${ticketId}`
+          );
+
+          toast.success("Ticket type deleted successfully!");
+
+          if (response.data.ticketTypes && setEventData) {
+            // Update eventData with the new ticketTypes
+            setEventData((prev) => ({
+              ...prev,
+              ticketTypes: response.data.ticketTypes,
+            }));
+          }
+
+          if (onEventUpdated) {
+            onEventUpdated(); // Refresh parent if needed
+          }
+        } catch (error) {
+          console.error("Error deleting ticket type:", error);
+          toast.error("Failed to delete ticket type.");
+        }
+      },
+      () => {
+        // Cancel clicked - do nothing
+      }
+    );
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -147,10 +171,6 @@ const TicketsTab = ({
           )
         : [...eventData.ticketTypes, ticketData];
 
-      setEventData((prev) => ({
-        ...prev,
-        ticketTypes: updatedTicketTypes,
-      }));
 
       closeTicketForm();
       if (onEventUpdated) {
@@ -293,132 +313,120 @@ const TicketsTab = ({
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Name
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={editingTicket ? editingTicket.name : newTicket.name}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={
-                    editingTicket
-                      ? editingTicket.description
-                      : newTicket.description
-                  }
-                  onChange={handleInputChange}
-                  rows="3"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="price"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Price
-                </label>
-                <div className="relative rounded-md shadow-sm">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <span className="text-gray-500 sm:text-sm">R</span>
-                  </div>
-                  <input
-                    type="number"
-                    id="price"
-                    name="price"
-                    value={
-                      editingTicket ? editingTicket.price : newTicket.price
-                    }
-                    onChange={handleInputChange}
-                    className="w-full pl-7 pr-12 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="0.00"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="quantity"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Quantity
-                </label>
-                <input
-                  type="number"
-                  id="quantity"
-                  name="quantity"
-                  value={
-                    editingTicket ? editingTicket.quantity : newTicket.quantity
-                  }
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="availableUntil"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Available Until
-                </label>
-                <input
-                  type="datetime-local"
-                  id="availableUntil"
-                  name="availableUntil"
-                  value={
-                    editingTicket
-                      ? formatDate(editingTicket.availableUntil, "yyyy-MM-dd")
-                      : newTicket.availableUntil
-                  }
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div className="flex justify-end space-x-3 pt-2">
-                <button
-                  type="button"
-                  onClick={closeTicketForm}
-                  className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-1"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-1"
-                >
-                  {editingTicket ? (
-                    <>
-                      <FiEdit className="w-4 h-4" /> Update Ticket
-                    </>
-                  ) : (
-                    <>
-                      <FiPlus className="w-4 h-4" /> Add Ticket
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
+  {/* Name Field */}
+  <div>
+    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+      Name
+    </label>
+    <input
+      type="text"
+      id="name"
+      name="name"
+      value={editingTicket ? editingTicket.name : newTicket.name}
+      onChange={handleInputChange}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+      required
+    />
+  </div>
+
+  {/* Description Field */}
+  <div>
+    <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+      Description
+    </label>
+    <textarea
+      id="description"
+      name="description"
+      value={editingTicket ? editingTicket.description : newTicket.description}
+      onChange={handleInputChange}
+      rows="3"
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+    />
+  </div>
+
+  {/* Price Field */}
+  <div>
+    <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+      Price
+    </label>
+    <div className="relative rounded-md shadow-sm">
+      <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+        <span className="text-gray-500 sm:text-sm">R</span>
+      </div>
+      <input
+        type="number"
+        id="price"
+        name="price"
+        value={editingTicket ? editingTicket.price : newTicket.price}
+        onChange={handleInputChange}
+        className="w-full pl-7 pr-12 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+        placeholder="0.00"
+        required
+      />
+    </div>
+  </div>
+
+  {/* Quantity Field */}
+  <div>
+    <label htmlFor="quantity" className="block text-sm font-medium text-gray-700">
+      Quantity
+    </label>
+    <input
+      type="number"
+      id="quantity"
+      name="quantity"
+      value={editingTicket ? editingTicket.quantity : newTicket.quantity}
+      onChange={handleInputChange}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+      required
+    />
+  </div>
+
+  {/* Available Until Field (Fixed) */}
+  <div>
+    <label htmlFor="availableUntil" className="block text-sm font-medium text-gray-700">
+      Available Until
+    </label>
+    <input
+      type="datetime-local"
+      id="availableUntil"
+      name="availableUntil"
+      value={
+        editingTicket
+          ? formatDateForInput(editingTicket.availableUntil)
+          : newTicket.availableUntil || ""
+      }
+      onChange={handleInputChange}
+      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+      required
+    />
+  </div>
+
+  {/* Buttons */}
+  <div className="flex justify-end space-x-3 pt-2">
+    <button
+      type="button"
+      onClick={closeTicketForm}
+      className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-1"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-900 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center gap-1"
+    >
+      {editingTicket ? (
+        <>
+          <FiEdit className="w-4 h-4" /> Update Ticket
+        </>
+      ) : (
+        <>
+          <FiPlus className="w-4 h-4" /> Add Ticket
+        </>
+      )}
+    </button>
+  </div>
+</form>
           </div>
         </div>
       )}
