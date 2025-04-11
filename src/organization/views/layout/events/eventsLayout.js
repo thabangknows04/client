@@ -5,6 +5,7 @@ import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FiEdit, FiTrash2, FiPlus, FiClock, FiUser } from "react-icons/fi";
 
 // Main component
 const EventLayout = () => {
@@ -498,7 +499,7 @@ const EventLayout = () => {
               paddingRight: 8,
               display: "inline-flex",
               fontSize: 12,
-              lineHeight: "20px",
+              lineHeight: "30px",
               fontWeight: 600,
               borderRadius: 9999,
               ...statusStyle,
@@ -516,31 +517,28 @@ const EventLayout = () => {
             fontWeight: 500,
           }}
         >
-          <button
-            onClick={() => handleEditEvent(event._id)}
-            style={{
-              color: colors.primary,
-              marginRight: 12,
-              ":hover": { color: colors.primaryHover },
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            {status === "Completed" ? "View" : "Edit"}
-          </button>
-          <button
-            onClick={() => handleDeleteEvent(event._id)}
-            style={{ 
-              color: "#DC2626", 
-              ":hover": { color: "#B91C1C" },
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            Delete
-          </button>
+      
+
+
+
+                                <button
+                                  onClick={() => handleEditEvent(event._id)}
+                                  className="inline-flex items-center px-3 py-1.5 mr-3 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                >
+                                  <FiEdit className="w-4 h-4 mr-1.5" />
+                                  Edit
+                                </button>
+                                <button
+                                onClick={() => handleDeleteEvent(event._id)}
+                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                >
+                                  <FiTrash2 className="w-4 h-4 mr-1.5" />
+                                  Delete
+                                </button>
+
+
+
+
         </td>
       </tr>
     );
@@ -699,6 +697,8 @@ const EventLayout = () => {
           </p>
         </div>
 
+
+
         {/* Events Summary Cards */}
         <div style={{ 
           display: 'grid', 
@@ -732,6 +732,12 @@ const EventLayout = () => {
             },
           }}
         >
+
+
+
+
+
+
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               onClick={() => setActiveFilter("all")}

@@ -4,7 +4,12 @@ import { getOrganizationUserDetails } from "../../services/organizationService";
 import axios from 'axios';
 
 const ScheduleTab = ({formatDate, eventData, scheduleView, setScheduleView, EventBoards}) => {
- 
+    const formatTimeRange = (start, end) => {
+        const startTime = new Date(start).toLocaleTimeString();
+        const endTime = new Date(end).toLocaleTimeString();
+        return `${startTime} - ${endTime}`;
+      };
+      
 
   return (
     <>

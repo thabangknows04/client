@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FiEdit, FiTrash2, FiUpload, FiX, FiUserPlus, FiSave } from "react-icons/fi";
-// import Papa from 'papaparse';
+import Papa from 'papaparse';
 
 const GuestsTab = ({
   eventData,
@@ -68,7 +68,7 @@ const GuestsTab = ({
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     setCsvFile(file);
-    /*
+  
     Papa.parse(file, {
       header: true,
       complete: (results) => {
@@ -82,7 +82,7 @@ const GuestsTab = ({
         setCsvData(mappedData);
       }
     });
-*/
+
 
   };
 
@@ -104,12 +104,12 @@ const GuestsTab = ({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Guest List</h2>
-            <p className="text-gray-500">Total {eventData.guestList?.length || 0} guests registered</p>
+            <p className="text-gray-500">Total {eventData.guestList?.length || 0} guests registered.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+              className="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-sm"
             >
               <FiUserPlus className="w-5 h-5" />
               Add Guest
@@ -133,7 +133,7 @@ const GuestsTab = ({
               <input
                 type="text"
                 placeholder="Search guests..."
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:border-transparent shadow-sm"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 focus:border-transparent shadow-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -172,7 +172,7 @@ const GuestsTab = ({
                                 type="text"
                                 value={guest.name}
                                 onChange={(e) => onGuestChange(guest._id, 'name', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                                 placeholder="Full Name"
                               />
                             ) : (
@@ -195,14 +195,14 @@ const GuestsTab = ({
                               type="email"
                               value={guest.email}
                               onChange={(e) => onGuestChange(guest._id, 'email', e.target.value)}
-                              className="w-full mb-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                              className="w-full mb-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                               placeholder="email@example.com"
                             />
                             <input
                               type="text"
                               value={guest.phone}
                               onChange={(e) => onGuestChange(guest._id, 'phone', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                               placeholder="Phone"
                             />
                           </>
@@ -218,7 +218,7 @@ const GuestsTab = ({
                           <select
                             value={guest.ticketType}
                             onChange={(e) => onGuestChange(guest._id, 'ticketType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                           >
                             <option value="">Select ticket</option>
                             {eventData.ticketTypes?.map(ticket => (
@@ -236,7 +236,7 @@ const GuestsTab = ({
                           <select
                             value={guest.rsvpStatus}
                             onChange={(e) => onGuestChange(guest._id, 'rsvpStatus', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                           >
                             <option value="pending">Pending</option>
                             <option value="confirmed">Confirmed</option>
@@ -255,7 +255,7 @@ const GuestsTab = ({
                           <>
                             <button
                               onClick={() => onGuestSave(guest._id)}
-                              className="text-blue-600 hover:text-blue-800 mr-3"
+                              className="text-blue-900 hover:text-blue-800 mr-3"
                             >
                               Save
                             </button>
@@ -265,21 +265,30 @@ const GuestsTab = ({
                             >
                               Cancel
                             </button>
+
+
+
+                            
                           </>
                         ) : (
                           <>
-                            <button
-                              onClick={() => handleEditGuest(guest)}
-                              className="text-blue-600 hover:text-blue-800 mr-3"
-                            >
-                              <FiEdit className="inline mr-1" /> Edit
-                            </button>
-                            <button
-                              onClick={() => onGuestRemove(guest._id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <FiTrash2 className="inline mr-1" /> Remove
-                            </button>
+                      
+
+
+                                                            <button
+                                                             onClick={() => handleEditGuest(guest)}
+                                                              className="inline-flex items-center px-3 py-1.5 mr-3 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                            >
+                                                              <FiEdit className="w-4 h-4 mr-1.5" />
+                                                              Edit
+                                                            </button>
+                                                            <button
+                                                            onClick={() => onGuestRemove(guest._id)}
+                                                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                                                            >
+                                                              <FiTrash2 className="w-4 h-4 mr-1.5" />
+                                                              Remove
+                                                            </button>
                           </>
                         )}
                       </td>
@@ -340,7 +349,7 @@ const GuestsTab = ({
                   type="text"
                   value={newGuest.name}
                   onChange={(e) => setNewGuest({...newGuest, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="John Doe"
                 />
               </div>
@@ -350,7 +359,7 @@ const GuestsTab = ({
                   type="email"
                   value={newGuest.email}
                   onChange={(e) => setNewGuest({...newGuest, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="john@example.com"
                 />
               </div>
@@ -360,7 +369,7 @@ const GuestsTab = ({
                   type="text"
                   value={newGuest.phone}
                   onChange={(e) => setNewGuest({...newGuest, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="+1234567890"
                 />
               </div>
@@ -369,7 +378,7 @@ const GuestsTab = ({
                 <select
                   value={newGuest.ticketType}
                   onChange={(e) => setNewGuest({...newGuest, ticketType: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="">Select ticket type</option>
                   {eventData.ticketTypes?.map(ticket => (
@@ -382,7 +391,7 @@ const GuestsTab = ({
                 <select
                   value={newGuest.rsvpStatus}
                   onChange={(e) => setNewGuest({...newGuest, rsvpStatus: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
@@ -399,7 +408,7 @@ const GuestsTab = ({
               </button>
               <button
                 onClick={handleAddGuest}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
                 disabled={!newGuest.name || !newGuest.email}
               >
                 Add Guest
@@ -429,7 +438,7 @@ const GuestsTab = ({
                     type="text"
                     value={editingGuest.name}
                     onChange={(e) => setEditingGuest({...editingGuest, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                     placeholder="Full Name"
                   />
                 </div>
@@ -440,7 +449,7 @@ const GuestsTab = ({
                   type="email"
                   value={editingGuest.email}
                   onChange={(e) => setEditingGuest({...editingGuest, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="email@example.com"
                 />
               </div>
@@ -450,7 +459,7 @@ const GuestsTab = ({
                   type="text"
                   value={editingGuest.phone}
                   onChange={(e) => setEditingGuest({...editingGuest, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                   placeholder="+1234567890"
                 />
               </div>
@@ -459,7 +468,7 @@ const GuestsTab = ({
                 <select
                   value={editingGuest.ticketType}
                   onChange={(e) => setEditingGuest({...editingGuest, ticketType: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="">Select ticket type</option>
                   {eventData.ticketTypes?.map(ticket => (
@@ -472,7 +481,7 @@ const GuestsTab = ({
                 <select
                   value={editingGuest.rsvpStatus}
                   onChange={(e) => setEditingGuest({...editingGuest, rsvpStatus: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-600 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="pending">Pending</option>
                   <option value="confirmed">Confirmed</option>
@@ -489,7 +498,7 @@ const GuestsTab = ({
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
                 disabled={!editingGuest.name || !editingGuest.email}
               >
                 Save Changes
@@ -513,7 +522,7 @@ const GuestsTab = ({
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                 <FiUpload className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="mt-4 flex justify-center">
-                  <label className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
+                  <label className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2 cursor-pointer shadow-sm">
                     <FiUpload className="w-5 h-5" />
                     Select CSV File
                     <input
@@ -580,7 +589,7 @@ const GuestsTab = ({
               </button>
               <button
                 onClick={handleBulkSave}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
                 disabled={csvData.length === 0}
               >
                 Import {csvData.length} Guests

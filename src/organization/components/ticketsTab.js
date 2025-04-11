@@ -7,7 +7,7 @@ import { FiClock, FiEdit, FiTrash2, FiTag, FiPlus } from 'react-icons/fi';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
+const TicketsTab = ({ eventData, setEventData, formatDate, onEventUpdated }) => {
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [newTicket, setNewTicket] = useState({
     name: '',
@@ -17,6 +17,7 @@ const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
     availableUntil: '',
   });
   const [editingTicket, setEditingTicket] = useState(null);
+  console.log('props in TicketsTab:', { eventData, setEventData });
 
   const openTicketForm = () => {
     setShowTicketForm(true);
@@ -33,6 +34,7 @@ const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
   const closeTicketForm = () => {
     setShowTicketForm(false);
     setEditingTicket(null);
+
     setNewTicket({
       name: '',
       description: '',
@@ -71,25 +73,63 @@ const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+  
+    const ticketData = {
+      ...newTicket,
+      eventId: eventData._id,
+    };
+
+    console.log(ticketData);
+  
     try {
-      if (editingTicket) {
-        // Update existing ticket
-        await axios.put(`/api/events/${eventData._id}/tickets/${editingTicket._id}`, newTicket);
-        toast.success("Ticket type updated successfully!");
-      } else {
-        // Add new ticket
-        await axios.post(`/api/events/${eventData._id}/tickets`, newTicket);
-        toast.success("Ticket type added successfully!");
+      const response = await fetch(
+        editingTicket
+          ? `http://localhost:5011/api/tickets/edit`
+          : `http://localhost:5011/api/tickets/add`,
+        {
+          method: editingTicket ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(ticketData),
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
+  
+      toast.success(
+        editingTicket
+          ? 'Ticket type updated successfully!'
+          : 'Ticket type added successfully!'
+      );
+ 
+
+      const updatedTicketTypes = editingTicket
+  ? eventData.ticketTypes.map(ticket =>
+      ticket._id === newTicket._id ? { ...ticketData } : ticket
+    )
+  : [...eventData.ticketTypes, ticketData];
+
+setEventData(prev => ({
+  ...prev,
+  ticketTypes: updatedTicketTypes,
+}));
+
+  
       closeTicketForm();
       if (onEventUpdated) {
-        onEventUpdated(); // Notify parent to refetch event data
+        onEventUpdated();
       }
     } catch (error) {
-      console.error("Error saving ticket type:", error);
-      toast.error(`Failed to ${editingTicket ? 'update' : 'add'} ticket type.`);
+      console.error('Error saving ticket type:', error);
+      toast.error(
+        `Failed to ${editingTicket ? 'update' : 'add'} ticket type.`
+      );
     }
   };
+  
 
   return (
     <>
@@ -283,7 +323,7 @@ const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
                   type="datetime-local"
                   id="availableUntil"
                   name="availableUntil"
-                  value={editingTicket ? formatDate(editingTicket.availableUntil, 'yyyy-MM-ddTHH:mm') : newTicket.availableUntil}
+                  value={editingTicket ? formatDate(editingTicket.availableUntil, 'yyyy-MM-dd') : newTicket.availableUntil}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -312,4 +352,4 @@ const TicketsTabTab = ({ eventData, formatDate, onEventUpdated }) => {
   );
 };
 
-export default TicketsTabTab;
+export default TicketsTab;
