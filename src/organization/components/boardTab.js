@@ -258,6 +258,19 @@ const BoardTab = ({ eventData, boardId }) => {
         </div>
       
         {renderActiveView()}
+
+
+
+        <div className="iframe-container">
+      <h2>Embed Example</h2>
+      <iframe
+        src="https://trello.com/b/1ZBuiXdl/leave-portal"  // URL you want to embed
+        title="Example Iframe"
+        width="100%"
+        height="400"
+        style={{ border: "none" }}  // Optional: for styling purposes
+      />
+    </div>
       </div>
       
       ) : (

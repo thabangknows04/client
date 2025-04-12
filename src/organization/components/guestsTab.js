@@ -26,7 +26,9 @@ const GuestsTab = ({
     name: '',
     email: '',
     phone: '',
+    dietary: '',
     ticketType: '',
+    allergies: '',
     rsvpStatus: 'pending'
   });
   const [csvData, setCsvData] = useState([]);
@@ -46,14 +48,19 @@ const GuestsTab = ({
 
   const handleAddGuest = () => {
     onAddGuest(newGuest);
+    console.log(newGuest);
     setNewGuest({
       name: '',
       email: '',
       phone: '',
+      dietary: '',
+      allergies: '',
       ticketType: '',
       rsvpStatus: 'pending'
     });
-    setShowAddModal(false);
+
+
+   // setShowAddModal(false);
   };
 
   const handleEditGuest = (guest) => {
@@ -62,6 +69,7 @@ const GuestsTab = ({
 
   const handleSaveEdit = () => {
     onGuestSave(editingGuest._id, editingGuest);
+    console.log(editingGuest);
     setEditingGuest(null);
   };
 
@@ -334,88 +342,122 @@ const GuestsTab = ({
 
       {/* Add Guest Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="flex justify-between items-center border-b px-6 py-4">
-              <h3 className="text-lg font-semibold text-gray-900">Add New Guest</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-500">
-                <FiX className="h-6 w-6" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-                <input
-                  type="text"
-                  value={newGuest.name}
-                  onChange={(e) => setNewGuest({...newGuest, name: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-                <input
-                  type="email"
-                  value={newGuest.email}
-                  onChange={(e) => setNewGuest({...newGuest, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                  placeholder="john@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-                <input
-                  type="text"
-                  value={newGuest.phone}
-                  onChange={(e) => setNewGuest({...newGuest, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                  placeholder="+1234567890"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Type</label>
-                <select
-                  value={newGuest.ticketType}
-                  onChange={(e) => setNewGuest({...newGuest, ticketType: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                >
-                  <option value="">Select ticket type</option>
-                  {eventData.ticketTypes?.map(ticket => (
-                    <option key={ticket._id} value={ticket._id}>{ticket.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Status</label>
-                <select
-                  value={newGuest.rsvpStatus}
-                  onChange={(e) => setNewGuest({...newGuest, rsvpStatus: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex justify-end space-x-3 px-6 py-4 border-t">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAddGuest}
-                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
-                disabled={!newGuest.name || !newGuest.email}
-              >
-                Add Guest
-              </button>
-            </div>
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div className="flex justify-between items-center border-b px-6 py-4">
+          <h3 className="text-lg font-semibold text-gray-900">Add New Guest</h3>
+          <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-500">
+            <FiX className="h-6 w-6" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          {/* Full Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+            <input
+              type="text"
+              value={newGuest.name}
+              onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              placeholder="John Doe"
+            />
+          </div>
+          {/* Email */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+            <input
+              type="email"
+              value={newGuest.email}
+              onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              placeholder="john@example.com"
+            />
+          </div>
+          {/* Phone */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+            <input
+              type="text"
+              value={newGuest.phone}
+              onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              placeholder="+1234567890"
+            />
+          </div>
+          {/* Ticket Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Type</label>
+            <select
+              value={newGuest.ticketType}
+              onChange={(e) => setNewGuest({ ...newGuest, ticketType: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+            >
+              <option value="">Select ticket type</option>
+              {eventData.ticketTypes?.map(ticket => (
+                <option key={ticket._id} value={ticket._id}>{ticket.name}</option>
+              ))}
+            </select>
+          </div>
+          {/* RSVP Status */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Status</label>
+            <select
+              value={newGuest.rsvpStatus}
+              onChange={(e) => setNewGuest({ ...newGuest, rsvpStatus: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+            >
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          {/* Dietary Requirements */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
+            <select
+              value={newGuest.dietary}
+              onChange={(e) => setNewGuest({ ...newGuest, dietary: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+            >
+              <option value="">Select dietary option</option>
+              <option value="vegetarian">Vegetarian</option>
+              <option value="vegan">Vegan</option>
+              <option value="halal">Halal</option>
+              <option value="kosher">Kosher</option>
+              <option value="gluten-free">Gluten-Free</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+          {/* Allergies */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+            <input
+              type="text"
+              value={newGuest.allergies}
+              onChange={(e) => setNewGuest({ ...newGuest, allergies: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              placeholder="e.g. Peanuts, Shellfish"
+            />
           </div>
         </div>
+        <div className="flex justify-end space-x-3 px-6 py-4 border-t">
+          <button
+            onClick={() => setShowAddModal(false)}
+            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleAddGuest}
+            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
+            disabled={!newGuest.name || !newGuest.email}
+          >
+            Add Guest
+          </button>
+        </div>
+      </div>
+    </div>
+    
       )}
 
       {/* Edit Guest Modal */}
@@ -488,7 +530,39 @@ const GuestsTab = ({
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
+
+
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
+  <select
+    value={editingGuest.dietary}
+    onChange={(e) => setEditingGuest({ ...editingGuest, dietary: e.target.value })}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+  >
+    <option value="">Select dietary option</option>
+    <option value="vegetarian">Vegetarian</option>
+    <option value="vegan">Vegan</option>
+    <option value="halal">Halal</option>
+    <option value="kosher">Kosher</option>
+    <option value="gluten-free">Gluten-Free</option>
+    <option value="none">None</option>
+  </select>
+</div>
+
+{/* Allergies */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+  <input
+    type="text"
+    value={editingGuest.allergies}
+    onChange={(e) => setEditingGuest({ ...editingGuest, allergies: e.target.value })}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+    placeholder="e.g. Peanuts, Shellfish"
+  />
+</div>
+
             </div>
+            
             <div className="flex justify-end space-x-3 px-6 py-4 border-t">
               <button
                 onClick={() => setEditingGuest(null)}

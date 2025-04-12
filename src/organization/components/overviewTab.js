@@ -332,9 +332,10 @@ const ScheduleTab = ({
                         </p>
                       )}
                       {speaker.bio && (
-                        <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                          {speaker.bio}
-                        </p>
+                     <p className="text-sm text-gray-600 mt-2 line-clamp-2">
+                     {speaker.bio.length > 30 ? `${speaker.bio.substring(0, 30)}...` : speaker.bio}
+                   </p>
+                   
                       )}
                     </div>
                   </div>

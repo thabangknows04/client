@@ -211,6 +211,8 @@ const [boardId, setBoardId] = useState('1913778535')
       name: "",
       email: "",
       phone: "",
+      allergies: "",
+      dietary: "",
       ticketType: eventData.ticketTypes[0]?._id || "",
       rsvpStatus: "pending",
       isEditing: true,
