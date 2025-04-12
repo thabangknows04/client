@@ -72,48 +72,60 @@ const ScheduleTab = ({
   // Add or update activity
   const handleActivitySubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-      let updatedSchedule = [...schedule];
-      const activityData =
-        editingActivity !== null ? editingActivity : newActivity;
-
-      // Prepare the payload for backend
+      const isEditing = editingActivity !== null;
+  
+      const activityData = isEditing ? editingActivity : newActivity;
+  
       const payload = {
         ...activityData,
-        // For backend, we might want to use speakerId instead of speaker name
-        speaker:
-          speakers.find((s) => s.id === activityData.speakerId)?.name || "",
+        eventId: eventData._id,
+        speaker: speakers.find((s) => s.id === activityData.speakerId)?.name || "",
       };
-
-      if (editingActivity !== null) {
-        // Update existing activity
-        const index = updatedSchedule.findIndex(
-          (a) => a.id === editingActivity.id
-        );
-        if (index !== -1) {
-          updatedSchedule[index] = payload;
-        }
-      } else {
-        // Add new activity
-        updatedSchedule.push({
-          ...payload,
-          id: Date.now().toString(), // Temporary ID, will be replaced by backend
-        });
-      }
-
-      // Call the update function with the new data
-      await onEventUpdate({
-        ...eventData,
-        schedule: updatedSchedule,
+  
+      const url = isEditing
+        ? "http://localhost:5011/api/activities/edit"
+        : "http://localhost:5011/api/activities/add";
+  
+      const method = isEditing ? "PUT" : "POST";
+  
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const result = await response.json();
+  
+      toast.success(
+        isEditing
+          ? "Activity updated successfully!"
+          : "Activity added successfully!"
+      );
+  
+      // Update the schedule in state with backend response
+      if (result.schedule && setEventData) {
+        setEventData((prev) => ({
+          ...prev,
+          schedule: result.schedule,
+        }));
+      }
+  
+  
       resetActivityForm();
     } catch (error) {
       console.error("Failed to update activities:", error);
-      // You might want to add error handling here
+      toast.error("Something went wrong while saving the activity.");
     }
   };
+  
 
   // Add or update speaker
   const handleSpeakerSubmit = async (e) => {
@@ -127,8 +139,8 @@ const ScheduleTab = ({
     console.log(JSON.stringify(speakerData));
 
     const url = editingSpeaker
-      ? "http://localhost:5011/api/speaker/edit"
-      : "http://localhost:5011/api/speaker/add";
+      ? "http://localhost:5011/api/speakers/edit"
+      : "http://localhost:5011/api/speakers/add";
 
     try {
       const response = await fetch(url, {
@@ -162,22 +174,6 @@ const ScheduleTab = ({
       toast.error("Something went wrong while saving speaker info.");
     }
   };
-
-  // Delete activity
-  const handleDeleteActivity = async (id) => {
-    if (window.confirm("Are you sure you want to delete this activity?")) {
-      try {
-        const updatedSchedule = schedule.filter((a) => a.id !== id);
-        await onEventUpdate({
-          ...eventData,
-          schedule: updatedSchedule,
-        });
-      } catch (error) {
-        console.error("Failed to delete activity:", error);
-      }
-    }
-  };
-
   Notiflix.Confirm.init({
     borderRadius: "7px",
     buttonsStyling: true,
@@ -186,6 +182,42 @@ const ScheduleTab = ({
     titleFontSize: "24px",
     titleFontWeight: "900",
   });
+
+  // Delete activity
+  const handleDeleteActivity = (activity) => {
+    const activityId = activity._id;
+  
+    Notiflix.Confirm.show(
+      "Confirm Deletion",
+      "Are you sure you want to delete this activity?",
+      "Yes",
+      "No",
+      async () => {
+        try {
+          const response = await axios.delete(
+            `http://localhost:5011/api/activities/delete/${activityId}`
+          );
+  
+          toast.success("Activity deleted successfully!");
+  
+          if (response.data.schedule && setEventData) {
+            setEventData((prev) => ({
+              ...prev,
+              schedule: response.data.schedule,
+            }));
+          }
+        } catch (error) {
+          console.error("Error deleting activity:", error);
+          toast.error("Failed to delete activity.");
+        }
+      },
+      () => {
+        // Cancel clicked — no action
+      }
+    );
+  };
+  
+  
 
   const handleDeleteSpeaker = (speaker) => {
     let speakerId = speaker._id;
@@ -327,11 +359,22 @@ const ScheduleTab = ({
                       {speaker.title} at {speaker.company}
                     </p>
                     {speaker.bio && (
-                      <p className="text-gray-600 mt-2 text-sm">
-                        {speaker.bio?.length > 120
-                          ? speaker.bio.substring(0, 120) + "..."
-                          : speaker.bio || "-"}
-                      </p>
+                 <p className="text-gray-600 mt-2 text-sm">
+                 {speaker.bio?.length > 30 ? (
+                   <>
+                     {speaker.bio.substring(0, 30)}...
+                     <span
+                       onClick={() => handleEditSpeaker(speaker)}
+                       className="block text-xs text-gray-400 cursor-pointer hover:underline"
+                     >
+                       Click Edit to read more
+                     </span>
+                   </>
+                 ) : (
+                   speaker.bio || "-"
+                 )}
+               </p>
+               
                     )}
                   </div>
                 </div>
@@ -390,11 +433,17 @@ const ScheduleTab = ({
                         {activity.startTime} - {activity.endTime}
                       </p>
                       {activity.description && (
-                        <p className="text-gray-600 mt-2 text-sm">
-                          {activity.description?.length > 120
-                            ? activity.description.substring(0, 120) + "..."
-                            : activity.description || "-"}
-                        </p>
+                     <p className="text-gray-600 mt-2 text-sm">
+                     {activity.description?.length > 30 ? (
+                       <>
+                         {activity.description.substring(0, 30)}...
+                         <span  onClick={() => handleEditActivity(activity)} className="block text-xs text-gray-400 cursor-pointer hover:underline">Click Edit to read more</span>
+                       </>
+                     ) : (
+                       activity.description || "-"
+                     )}
+                   </p>
+                   
                       )}
                       {activity.speaker && (
                         <p className="text-gray-600 mt-1">
@@ -413,7 +462,7 @@ const ScheduleTab = ({
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteActivity(activity.id)}
+                        onClick={() => handleDeleteActivity(activity)}
                         className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                       >
                         <FiTrash2 className="w-4 h-4 mr-1.5" />
@@ -456,10 +505,16 @@ const ScheduleTab = ({
                         {activity.activity}
                       </td>
                       <td className="px-6 py-4">
-                        {activity.description?.length > 80
-                          ? activity.description.substring(0, 30) + "..."
-                          : activity.description || "-"}
-                      </td>
+  {activity.description?.length > 30 ? (
+    <>
+      {activity.description.substring(0, 30)}...
+      <p onClick={() => handleEditActivity(activity)} className="text-xs text-gray-400 cursor-pointer hover:underline">Click Edit to read more</p>
+    </>
+  ) : (
+    activity.description || "-"
+  )}
+</td>
+
                       <td className="px-6 py-4 whitespace-nowrap">
                         {activity.speaker || "-"}
                       </td>
@@ -472,7 +527,7 @@ const ScheduleTab = ({
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteActivity(activity.id)}
+                          onClick={() => handleDeleteActivity(activity)}
                           className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                         >
                           <FiTrash2 className="w-4 h-4 mr-1.5" />
@@ -606,7 +661,7 @@ const ScheduleTab = ({
                 >
                   <option value="">Select Speaker</option>
                   {speakers.map((speaker) => (
-                    <option key={speaker.id} value={speaker.id}>
+                    <option key={speaker.id} value={speaker._id}>
                       {speaker.name}
                     </option>
                   ))}
