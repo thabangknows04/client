@@ -1070,6 +1070,7 @@ const paginatedGuests = filteredGuests.slice(
             formatDate={formatDate}
             renderScheduleView={renderScheduleView}
             eventData={eventData}
+            setEventData={setEventData}
             scheduleView={scheduleView}
             setScheduleView={setScheduleView}
           />

@@ -29,7 +29,7 @@ const TicketsTab = ({
     availableUntil: "",
   });
   let [editingTicket, setEditingTicket] = useState(null);
-  console.log("props in TicketsTab:", { eventData, setEventData });
+ // console.log("props in TicketsTab:", { eventData, setEventData });
 
   const openTicketForm = () => {
     setShowTicketForm(true);
@@ -254,7 +254,7 @@ const TicketsTab = ({
                   <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
                     <button
                       onClick={() => handleEdit(ticket)}
-                      className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
                       <FiEdit className="w-4 h-4 mr-1.5" />
                       Edit
@@ -264,7 +264,7 @@ const TicketsTab = ({
                       className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                     >
                       <FiTrash2 className="w-4 h-4 mr-1.5" />
-                      Delete
+                      Remove
                     </button>
                   </div>
                 </div>

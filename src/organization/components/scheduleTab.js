@@ -1,7 +1,17 @@
 import React, { useState } from "react";
 import { FiEdit, FiTrash2, FiPlus, FiClock, FiUser } from "react-icons/fi";
+import { confirmAlert } from "react-confirm-alert";
+import "react-confirm-alert/src/react-confirm-alert.css";
+import Notiflix from "notiflix";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
-const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
+const ScheduleTab = ({
+  setEventData,
+  eventData = {},
+  onEventUpdate = () => {},
+}) => {
   const [scheduleView, setScheduleView] = useState("board");
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingSpeaker, setEditingSpeaker] = useState(null);
@@ -14,14 +24,14 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
     endTime: "",
     activity: "",
     speakerId: "",
-    description: ""
+    description: "",
   });
 
   const [newSpeaker, setNewSpeaker] = useState({
     name: "",
     title: "",
     company: "",
-    bio: ""
+    bio: "",
   });
 
   const [showActivityForm, setShowActivityForm] = useState(false);
@@ -33,12 +43,12 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
     if (editingActivity !== null) {
       setEditingActivity({
         ...editingActivity,
-        [name]: value
+        [name]: value,
       });
     } else {
       setNewActivity({
         ...newActivity,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -49,12 +59,12 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
     if (editingSpeaker !== null) {
       setEditingSpeaker({
         ...editingSpeaker,
-        [name]: value
+        [name]: value,
       });
     } else {
       setNewSpeaker({
         ...newSpeaker,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -62,21 +72,25 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
   // Add or update activity
   const handleActivitySubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       let updatedSchedule = [...schedule];
-      const activityData = editingActivity !== null ? editingActivity : newActivity;
-      
+      const activityData =
+        editingActivity !== null ? editingActivity : newActivity;
+
       // Prepare the payload for backend
       const payload = {
         ...activityData,
         // For backend, we might want to use speakerId instead of speaker name
-        speaker: speakers.find(s => s.id === activityData.speakerId)?.name || ""
+        speaker:
+          speakers.find((s) => s.id === activityData.speakerId)?.name || "",
       };
 
       if (editingActivity !== null) {
         // Update existing activity
-        const index = updatedSchedule.findIndex(a => a.id === editingActivity.id);
+        const index = updatedSchedule.findIndex(
+          (a) => a.id === editingActivity.id
+        );
         if (index !== -1) {
           updatedSchedule[index] = payload;
         }
@@ -84,16 +98,16 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
         // Add new activity
         updatedSchedule.push({
           ...payload,
-          id: Date.now().toString() // Temporary ID, will be replaced by backend
+          id: Date.now().toString(), // Temporary ID, will be replaced by backend
         });
       }
-      
+
       // Call the update function with the new data
       await onEventUpdate({
         ...eventData,
-        schedule: updatedSchedule
+        schedule: updatedSchedule,
       });
-      
+
       resetActivityForm();
     } catch (error) {
       console.error("Failed to update activities:", error);
@@ -104,34 +118,48 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
   // Add or update speaker
   const handleSpeakerSubmit = async (e) => {
     e.preventDefault();
-    
+    const speakerData = {
+      ...(editingSpeaker !== null ? editingSpeaker : newSpeaker),
+      eventId: eventData._id,
+    };
+
+    console.log(eventData._id);
+    console.log(JSON.stringify(speakerData));
+
+    const url = editingSpeaker
+      ? "http://localhost:5011/api/speaker/edit"
+      : "http://localhost:5011/api/speaker/add";
+
     try {
-      let updatedSpeakers = [...speakers];
-      
-      if (editingSpeaker !== null) {
-        // Update existing speaker
-        const index = updatedSpeakers.findIndex(s => s.id === editingSpeaker.id);
-        if (index !== -1) {
-          updatedSpeakers[index] = editingSpeaker;
-        }
-      } else {
-        // Add new speaker
-        updatedSpeakers.push({
-          ...newSpeaker,
-          id: Date.now().toString() // Temporary ID, will be replaced by backend
-        });
-      }
-      
-      // Call the update function with the new data
-      await onEventUpdate({
-        ...eventData,
-        speakers: updatedSpeakers
+      const response = await fetch(url, {
+        method: editingSpeaker ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(speakerData),
       });
-      
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      toast.success(
+        editingSpeaker
+          ? "Speaker updated successfully!"
+          : "Speaker added successfully!"
+      );
+
+      setEventData((prevData) => ({
+        ...prevData,
+        speakers: result.speakers,
+      }));
+
       resetSpeakerForm();
     } catch (error) {
-      console.error("Failed to update speakers:", error);
-      // You might want to add error handling here
+      console.error("Failed to update speaker:", error);
+      toast.error("Something went wrong while saving speaker info.");
     }
   };
 
@@ -139,10 +167,10 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
   const handleDeleteActivity = async (id) => {
     if (window.confirm("Are you sure you want to delete this activity?")) {
       try {
-        const updatedSchedule = schedule.filter(a => a.id !== id);
+        const updatedSchedule = schedule.filter((a) => a.id !== id);
         await onEventUpdate({
           ...eventData,
-          schedule: updatedSchedule
+          schedule: updatedSchedule,
         });
       } catch (error) {
         console.error("Failed to delete activity:", error);
@@ -150,40 +178,61 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
     }
   };
 
-  // Delete speaker
-  const handleDeleteSpeaker = async (id) => {
-    if (window.confirm("Are you sure you want to delete this speaker?")) {
-      try {
-        // First remove this speaker from any activities
-        const updatedSchedule = schedule.map(activity => {
-          if (activity.speakerId === id) {
-            return {
-              ...activity,
-              speakerId: "",
-              speaker: ""
-            };
-          }
-          return activity;
-        });
+  Notiflix.Confirm.init({
+    borderRadius: "7px",
+    buttonsStyling: true,
+    okButtonBackground: "#f70000",
+    titleColor: "#1d4079",
+    titleFontSize: "24px",
+    titleFontWeight: "900",
+  });
 
-        const updatedSpeakers = speakers.filter(s => s.id !== id);
-        
-        await onEventUpdate({
-          ...eventData,
-          schedule: updatedSchedule,
-          speakers: updatedSpeakers
-        });
-      } catch (error) {
-        console.error("Failed to delete speaker:", error);
+  const handleDeleteSpeaker = (speaker) => {
+    let speakerId = speaker._id;
+
+    Notiflix.Confirm.show(
+      "Confirm Deletion",
+      "Are you sure you want to delete this speaker?",
+      "Yes",
+      "No",
+      async () => {
+        try {
+          const response = await axios.delete(
+            `http://localhost:5011/api/speaker/delete/${speakerId}`
+          );
+
+          toast.success("Speaker deleted successfully!");
+
+          if (response.data.speakers && setEventData) {
+            setEventData((prev) => ({
+              ...prev,
+              speakers: response.data.speakers,
+            }));
+          }
+
+          //  setEventData((prevData) => ({
+          //    ...prevData,
+          //    speakers: result.speakers,
+          //  }));
+        } catch (error) {
+          console.error("Error deleting speaker:", error);
+          toast.error("Failed to delete speaker.");
+        }
+      },
+      () => {
+        // Cancel clicked — no action
       }
-    }
+    );
   };
 
   // Prepare to edit activity
   const handleEditActivity = (activity) => {
     setEditingActivity({
       ...activity,
-      speakerId: activity.speakerId || speakers.find(s => s.name === activity.speaker)?.id || ""
+      speakerId:
+        activity.speakerId ||
+        speakers.find((s) => s.name === activity.speaker)?.id ||
+        "",
     });
     setShowActivityForm(true);
   };
@@ -201,7 +250,7 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
       endTime: "",
       activity: "",
       speakerId: "",
-      description: ""
+      description: "",
     });
     setEditingActivity(null);
     setShowActivityForm(false);
@@ -213,7 +262,7 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
       name: "",
       title: "",
       company: "",
-      bio: ""
+      bio: "",
     });
     setEditingSpeaker(null);
     setShowSpeakerForm(false);
@@ -247,7 +296,7 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {/* Speakers Section */}
+        {/* Speakers Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold">Event Speakers</h3>
@@ -270,61 +319,45 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
               >
                 <div className="flex justify-between items-start">
                   <div>
-                    <h4 className="font-medium text-lg flex items-center gap-2">
-                      <FiUser className="inline" />
+                    <h4 className="font-medium text-lg  flex items-center gap-2">
+                      <FiUser className="inline bg-blue-300 text-blue-700 rounded-full p-1" />
                       {speaker.name}
                     </h4>
                     <p className="text-gray-600 mt-1">
                       {speaker.title} at {speaker.company}
                     </p>
                     {speaker.bio && (
-                  <p className="text-gray-600 mt-2 text-sm">
-                  {speaker.bio?.length > 120
-                    ? speaker.bio.substring(0, 120) + "..."
-                    : speaker.bio || "-"}
-                </p>
-                
+                      <p className="text-gray-600 mt-2 text-sm">
+                        {speaker.bio?.length > 120
+                          ? speaker.bio.substring(0, 120) + "..."
+                          : speaker.bio || "-"}
+                      </p>
                     )}
                   </div>
-
-
-
-                  
-
-
                 </div>
                 <div className="flex-end gap-2">
-                  
-
-
-
-                      <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
-                                <button
-                                   onClick={() => handleEditSpeaker(speaker)}
-                                  className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                >
-                                  <FiEdit className="w-4 h-4 mr-1.5" />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteSpeaker(speaker.id)}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                >
-                                  <FiTrash2 className="w-4 h-4 mr-1.5" />
-                                  Delete
-                                </button>
-                              </div>
-
-
-
+                  <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                    <button
+                      onClick={() => handleEditSpeaker(speaker)}
+                      className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    >
+                      <FiEdit className="w-4 h-4 mr-1.5" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteSpeaker(speaker)}
+                      className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                    >
+                      <FiTrash2 className="w-4 h-4 mr-1.5" />
+                      Remove
+                    </button>
                   </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-        
-        
-        
+
         {/* Schedule Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-center mb-4">
@@ -349,7 +382,9 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium text-lg">{activity.activity}</h4>
+                      <h4 className="font-medium text-lg">
+                        {activity.activity}
+                      </h4>
                       <p className="text-gray-600 flex items-center gap-2 mt-1">
                         <FiClock className="inline" />
                         {activity.startTime} - {activity.endTime}
@@ -357,9 +392,8 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                       {activity.description && (
                         <p className="text-gray-600 mt-2 text-sm">
                           {activity.description?.length > 120
-  ? activity.description.substring(0, 120) + "..."
-  : activity.description || "-"}
-
+                            ? activity.description.substring(0, 120) + "..."
+                            : activity.description || "-"}
                         </p>
                       )}
                       {activity.speaker && (
@@ -368,37 +402,25 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                         </p>
                       )}
                     </div>
-
-
-        
-
-
-
-
                   </div>
                   <div className="flex-end gap-2">
-                     
-
-
-
-                     <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
-                               <button
-                                 onClick={() => handleEditActivity(activity)}
-                                 className="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                               >
-                                 <FiEdit className="w-4 h-4 mr-1.5" />
-                                 Edit
-                               </button>
-                               <button
-                                onClick={() => handleDeleteActivity(activity.id)}
-                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                               >
-                                 <FiTrash2 className="w-4 h-4 mr-1.5" />
-                                 Delete
-                               </button>
-                             </div>
-                 </div>
-
+                    <div className="mt-6 pt-4 border-t border-gray-100 flex justify-end space-x-3">
+                      <button
+                        onClick={() => handleEditActivity(activity)}
+                        className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                      >
+                        <FiEdit className="w-4 h-4 mr-1.5" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteActivity(activity.id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                      >
+                        <FiTrash2 className="w-4 h-4 mr-1.5" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -434,32 +456,28 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                         {activity.activity}
                       </td>
                       <td className="px-6 py-4">
-                      {activity.description?.length > 80
-  ? activity.description.substring(0, 30) + "..."
-  : activity.description || "-"}
+                        {activity.description?.length > 80
+                          ? activity.description.substring(0, 30) + "..."
+                          : activity.description || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {activity.speaker || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    
-                     
-
-                                <button
-                                  onClick={() => handleEditActivity(activity)}
-                                  className="inline-flex items-center px-3 py-1.5 mr-3 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                >
-                                  <FiEdit className="w-4 h-4 mr-1.5" />
-                                  Edit
-                                </button>
-                                <button
-                                onClick={() => handleDeleteActivity(activity.id)}
-                                  className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                >
-                                  <FiTrash2 className="w-4 h-4 mr-1.5" />
-                                  Delete
-                                </button>
-                              
+                        <button
+                          onClick={() => handleEditActivity(activity)}
+                          className="inline-flex items-center mr-3 px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                        >
+                          <FiEdit className="w-4 h-4 mr-1.5" />
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteActivity(activity.id)}
+                          className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                        >
+                          <FiTrash2 className="w-4 h-4 mr-1.5" />
+                          Remove
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -468,8 +486,6 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
             </div>
           )}
         </div>
-
-   
       </div>
 
       {/* Activity Form Modal */}
@@ -509,7 +525,11 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 <input
                   type="text"
                   name="activity"
-                  value={editingActivity ? editingActivity.activity : newActivity.activity}
+                  value={
+                    editingActivity
+                      ? editingActivity.activity
+                      : newActivity.activity
+                  }
                   onChange={handleActivityChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -524,7 +544,11 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                   <input
                     type="time"
                     name="startTime"
-                    value={editingActivity ? editingActivity.startTime : newActivity.startTime}
+                    value={
+                      editingActivity
+                        ? editingActivity.startTime
+                        : newActivity.startTime
+                    }
                     onChange={handleActivityChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     required
@@ -537,7 +561,11 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                   <input
                     type="time"
                     name="endTime"
-                    value={editingActivity ? editingActivity.endTime : newActivity.endTime}
+                    value={
+                      editingActivity
+                        ? editingActivity.endTime
+                        : newActivity.endTime
+                    }
                     onChange={handleActivityChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                     required
@@ -551,7 +579,11 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 </label>
                 <textarea
                   name="description"
-                  value={editingActivity ? editingActivity.description : newActivity.description}
+                  value={
+                    editingActivity
+                      ? editingActivity.description
+                      : newActivity.description
+                  }
                   onChange={handleActivityChange}
                   rows="3"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
@@ -564,7 +596,11 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 </label>
                 <select
                   name="speakerId"
-                  value={editingActivity ? editingActivity.speakerId : newActivity.speakerId}
+                  value={
+                    editingActivity
+                      ? editingActivity.speakerId
+                      : newActivity.speakerId
+                  }
                   onChange={handleActivityChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 >
@@ -648,7 +684,9 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 <input
                   type="text"
                   name="title"
-                  value={editingSpeaker ? editingSpeaker.title : newSpeaker.title}
+                  value={
+                    editingSpeaker ? editingSpeaker.title : newSpeaker.title
+                  }
                   onChange={handleSpeakerChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -662,7 +700,9 @@ const ScheduleTab = ({ eventData = {}, onEventUpdate = () => {} }) => {
                 <input
                   type="text"
                   name="company"
-                  value={editingSpeaker ? editingSpeaker.company : newSpeaker.company}
+                  value={
+                    editingSpeaker ? editingSpeaker.company : newSpeaker.company
+                  }
                   onChange={handleSpeakerChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                   required
