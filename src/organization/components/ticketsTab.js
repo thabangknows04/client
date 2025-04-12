@@ -31,6 +31,9 @@ const TicketsTab = ({
   let [editingTicket, setEditingTicket] = useState(null);
  // console.log("props in TicketsTab:", { eventData, setEventData });
 
+
+ console.log(JSON.stringify(eventData));
+
   const openTicketForm = () => {
     setShowTicketForm(true);
     setEditingTicket(null);

@@ -72,7 +72,10 @@ const Sidebar = () => {
       className={`fixed inset-y-0 left-0 z-50 w-64 text-white shadow-xl transform transition-transform duration-200 ease-in-out ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
       }`}
-      style={{ backgroundColor: '#2D1E3E' }}
+      style={{
+        background: "linear-gradient(135deg, #2D1E3E, #2c61b7)"
+      }}
+      
     >
       {/* Brand Header */}
       <div className="flex items-center justify-between h-20 px-6 border-b border-purple-800">

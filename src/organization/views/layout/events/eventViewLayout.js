@@ -33,7 +33,7 @@ const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [scheduleView, setScheduleView] = useState("board");
   const [sessions, setSessions] = useState(() => eventData?.schedule || []);
-
+const [boardId, setBoardId] = useState('1913778535')
   // Setup for react-big-calendar
   const locales = {
     'en-US': require('date-fns/locale/en-US')
@@ -1080,9 +1080,9 @@ const paginatedGuests = filteredGuests.slice(
           <TicketsTab setEventData={setEventData} eventData={eventData} formatDate={formatDate} />
         )}
 
-        {activeTab === "analytics" && <AnalyticsTab />}
+        {activeTab === "analytics" && <AnalyticsTab eventData={eventData} />}
 
-        {activeTab === "board" && <BoardTab />}
+        {activeTab === "board" && <BoardTab eventData={eventData} boardId={boardId} />}
       </main>
     </div>
   );
