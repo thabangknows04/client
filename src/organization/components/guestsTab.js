@@ -1,24 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FiEdit, FiTrash2, FiUpload, FiX, FiUserPlus, FiSave } from "react-icons/fi";
 import Papa from 'papaparse';
 
 const GuestsTab = ({
   eventData,
-  filteredGuests,
-  onAddGuest,
+  guests,
+  onGuestListUpdate,
   searchTerm,
   setSearchTerm,
-  onGuestChange,
   getStatusColor,
-  onGuestSave,
-  onGuestCancel,
-  onGuestEdit,
-  onGuestRemove,
   itemsPerPage,
   currentPage,
   setCurrentPage,
-  onBulkSave,
-  onBulkUpdate
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -34,6 +27,23 @@ const GuestsTab = ({
   const [csvData, setCsvData] = useState([]);
   const [csvFile, setCsvFile] = useState(null);
   const [editingGuest, setEditingGuest] = useState(null);
+  const [localGuests, setLocalGuests] = useState([]);
+  const [filteredGuests, setFilteredGuests] = useState([]);
+
+  // Initialize local guests when component mounts or guests prop changes
+  useEffect(() => {
+    setLocalGuests(guests.map(guest => ({ ...guest, isEditing: false, isNew: false })));
+  }, [guests]);
+
+  // Filter guests based on search term
+  useEffect(() => {
+    const filtered = localGuests.filter(guest => 
+      guest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      guest.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredGuests(filtered);
+  }, [searchTerm, localGuests]);
 
   // Generate avatar initials
   const getInitials = (name) => {
@@ -47,8 +57,15 @@ const GuestsTab = ({
   };
 
   const handleAddGuest = () => {
-    onAddGuest(newGuest);
-    console.log(newGuest);
+    if (!newGuest.name || !newGuest.email) return;
+    
+    const guestToAdd = {
+      ...newGuest,
+      _id: `temp-${Date.now()}`,
+      isNew: true
+    };
+    
+    setLocalGuests([...localGuests, guestToAdd]);
     setNewGuest({
       name: '',
       email: '',
@@ -58,19 +75,46 @@ const GuestsTab = ({
       ticketType: '',
       rsvpStatus: 'pending'
     });
-
-
-   // setShowAddModal(false);
+    setShowAddModal(false);
   };
 
   const handleEditGuest = (guest) => {
+    setLocalGuests(localGuests.map(g => 
+      g._id === guest._id ? { ...g, isEditing: true } : g
+    ));
     setEditingGuest({...guest});
   };
 
   const handleSaveEdit = () => {
-    onGuestSave(editingGuest._id, editingGuest);
-    console.log(editingGuest);
+    if (!editingGuest.name || !editingGuest.email) return;
+    
+    setLocalGuests(localGuests.map(g => 
+      g._id === editingGuest._id ? { ...editingGuest, isEditing: false } : g
+    ));
     setEditingGuest(null);
+  };
+
+  const handleCancelEdit = (guestId) => {
+    // If it was a new guest, remove it completely
+    const guest = localGuests.find(g => g._id === guestId);
+    if (guest?.isNew) {
+      setLocalGuests(localGuests.filter(g => g._id !== guestId));
+    } else {
+      // Otherwise just cancel editing
+      setLocalGuests(localGuests.map(g => 
+        g._id === guestId ? { ...g, isEditing: false } : g
+      ));
+    }
+  };
+
+  const handleRemoveGuest = (guestId) => {
+    setLocalGuests(localGuests.filter(g => g._id !== guestId));
+  };
+
+  const handleGuestChange = (guestId, field, value) => {
+    setLocalGuests(localGuests.map(g => 
+      g._id === guestId ? { ...g, [field]: value } : g
+    ));
   };
 
   const handleFileUpload = (e) => {
@@ -85,24 +129,59 @@ const GuestsTab = ({
           email: row.Email || row.email || '',
           phone: row.Phone || row.phone || '',
           ticketType: row['Ticket Type'] || row.ticketType || '',
-          rsvpStatus: row.Status || row.status || 'pending'
+          rsvpStatus: row.Status || row.status || 'pending',
+          dietary: row.Dietary || row.dietary || '',
+          allergies: row.Allergies || row.allergies || '',
+          _id: `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          isNew: true
         }));
-        setCsvData(mappedData);
+        setCsvData(mappedData.filter(guest => guest.name && guest.email));
       }
     });
-
-
   };
 
-  const handleBulkSave = () => {
-    onBulkSave(csvData);
+  const handleBulkImport = () => {
+    setLocalGuests([...localGuests, ...csvData]);
     setCsvData([]);
     setCsvFile(null);
     setShowImportModal(false);
   };
 
-  const handleBulkUpdate = () => {
-    onBulkUpdate(filteredGuests);
+  const handleSaveAllChanges = async () => {
+    try {
+      // Separate new guests, updated guests, and unchanged guests
+      const newGuests = localGuests.filter(g => g.isNew && !g._id.startsWith('temp-'));
+      const updatedGuests = localGuests.filter(g => 
+        !g.isNew && 
+        guests.some(og => og._id === g._id && (
+          og.name !== g.name ||
+          og.email !== g.email ||
+          og.phone !== g.phone ||
+          og.ticketType !== g.ticketType ||
+          og.rsvpStatus !== g.rsvpStatus ||
+          og.dietary !== g.dietary ||
+          og.allergies !== g.allergies
+        ))
+      );
+
+
+console.log()
+
+      
+      // Call the API with the changes
+      await onGuestListUpdate({
+        newGuests,
+        updatedGuests,
+        removedGuests: guests.filter(og => !localGuests.some(g => g._id === og._id)).map(g => g._id)
+      });
+      
+      // Reset editing flags
+      setLocalGuests(localGuests.map(g => ({ ...g, isEditing: false, isNew: false })));
+      
+    } catch (error) {
+      console.error('Failed to save changes:', error);
+      // Handle error (show toast, etc.)
+    }
   };
 
   return (
@@ -112,7 +191,7 @@ const GuestsTab = ({
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Guest List</h2>
-            <p className="text-gray-500">Total {eventData.guestList?.length || 0} guests registered.</p>
+            <p className="text-gray-500">Total {localGuests.length} guests registered.</p>
           </div>
           <div className="flex flex-wrap gap-3">
             <button
@@ -130,13 +209,30 @@ const GuestsTab = ({
               Import CSV
             </button>
             <button
-              onClick={handleBulkUpdate}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm"
-              disabled={!filteredGuests.some(g => g.isEditing || g.isNew)}
-            >
-              <FiSave className="w-5 h-5" />
-              Save All Changes
-            </button>
+  onClick={handleSaveAllChanges}
+  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm"
+  disabled={
+    !localGuests.some(g => 
+      g.isEditing || 
+      g.isNew || 
+      (
+        guests.some(og => og._id === g._id && (
+          og.name !== g.name ||
+          og.email !== g.email ||
+          og.phone !== g.phone ||
+          og.ticketType !== g.ticketType ||
+          og.rsvpStatus !== g.rsvpStatus ||
+          og.dietary !== g.dietary ||
+          og.allergies !== g.allergies
+        ))
+      )
+    ) || guests.length !== localGuests.filter(g => !g.isNew).length
+  }
+>
+  <FiSave className="w-5 h-5" />
+  Save All Changes
+</button>
+
             <div className="relative flex-grow md:w-64">
               <input
                 type="text"
@@ -160,6 +256,7 @@ const GuestsTab = ({
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dietary Requirements</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -168,139 +265,66 @@ const GuestsTab = ({
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredGuests.length > 0 ? (
                   filteredGuests.map((guest) => (
-                    <tr key={guest._id} className={guest.isEditing ? "bg-blue-50" : "hover:bg-gray-50"}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                            <span className="text-blue-800 font-medium">{getInitials(guest.name)}</span>
-                          </div>
-                          <div className="ml-4">
-                            {guest.isEditing ? (
-                              <input
-                                type="text"
-                                value={guest.name}
-                                onChange={(e) => onGuestChange(guest._id, 'name', e.target.value)}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                                placeholder="Full Name"
-                              />
-                            ) : (
-                              <>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {guest.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {eventData.ticketTypes?.find(t => t._id === guest.ticketType)?.name || guest.ticketType}
-                                </div>
-                              </>
-                            )}
-                          </div>
+                    <tr key={guest._id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                          <span className="text-blue-800 font-medium">{getInitials(guest.name)}</span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {guest.isEditing ? (
-                          <>
-                            <input
-                              type="email"
-                              value={guest.email}
-                              onChange={(e) => onGuestChange(guest._id, 'email', e.target.value)}
-                              className="w-full mb-2 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                              placeholder="email@example.com"
-                            />
-                            <input
-                              type="text"
-                              value={guest.phone}
-                              onChange={(e) => onGuestChange(guest._id, 'phone', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                              placeholder="Phone"
-                            />
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-sm text-gray-900">{guest.email}</div>
-                            <div className="text-sm text-gray-500">{guest.phone || '-'}</div>
-                          </>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {guest.isEditing ? (
-                          <select
-                            value={guest.ticketType}
-                            onChange={(e) => onGuestChange(guest._id, 'ticketType', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                          >
-                            <option value="">Select ticket</option>
-                            {eventData.ticketTypes?.map(ticket => (
-                              <option key={ticket._id} value={ticket._id}>{ticket.name}</option>
-                            ))}
-                          </select>
-                        ) : (
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {guest.name}
+                          </div>
                           <div className="text-sm text-gray-500">
                             {eventData.ticketTypes?.find(t => t._id === guest.ticketType)?.name || guest.ticketType}
                           </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {guest.isEditing ? (
-                          <select
-                            value={guest.rsvpStatus}
-                            onChange={(e) => onGuestChange(guest._id, 'rsvpStatus', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="cancelled">Cancelled</option>
-                          </select>
-                        ) : (
-                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            getStatusColor(guest.rsvpStatus)
-                          }`}>
-                            {guest.rsvpStatus.charAt(0).toUpperCase() + guest.rsvpStatus.slice(1)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        {guest.isEditing ? (
-                          <>
-                            <button
-                              onClick={() => onGuestSave(guest._id)}
-                              className="text-blue-900 hover:text-blue-800 mr-3"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={() => onGuestCancel(guest._id)}
-                              className="text-gray-600 hover:text-gray-800"
-                            >
-                              Cancel
-                            </button>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{guest.email}</div>
+                      <div className="text-sm text-gray-500">{guest.phone || '-'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+    <span className="text-gray-500 font-semibold">Dietary:</span> {guest.dietary || 'None'}
+  </div>
+  <div className="text-sm text-gray-900 font-medium mb-1">
+    <span className="text-gray-500 font-semibold">Allergies:</span> {guest.allergies || 'None'}
+  </div>
+
+</td>
 
 
-
-                            
-                          </>
-                        ) : (
-                          <>
-                      
-
-
-                                                            <button
-                                                             onClick={() => handleEditGuest(guest)}
-                                                              className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors mr-3"
-                                                            >
-                                                              <FiEdit className="w-4 h-4 mr-1.5" />
-                                                              Edit
-                                                            </button>
-                                                            <button
-                                                            onClick={() => onGuestRemove(guest._id)}
-                                                              className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
-                                                            >
-                                                              <FiTrash2 className="w-4 h-4 mr-1.5" />
-                                                              Remove
-                                                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        {eventData.ticketTypes?.find(t => t._id === guest.ticketType)?.name || guest.ticketType}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        getStatusColor(guest.rsvpStatus)
+                      }`}>
+                        {guest.rsvpStatus.charAt(0).toUpperCase() + guest.rsvpStatus.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEditGuest(guest)}
+                        className="inline-flex items-center px-3 py-1.5 border border-blue-900 shadow-sm text-sm leading-4 font-medium rounded-md text-blue-900 hover:text-white bg-white hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors mr-3"
+                      >
+                        <FiEdit className="w-4 h-4 mr-1.5" />
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleRemoveGuest(guest._id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm leading-4 font-medium rounded-md text-red-600 hover:text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
+                      >
+                        <FiTrash2 className="w-4 h-4 mr-1.5" />
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
                   ))
                 ) : (
                   <tr>
@@ -342,122 +366,114 @@ const GuestsTab = ({
 
       {/* Add Guest Modal */}
       {showAddModal && (
-      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-        <div className="flex justify-between items-center border-b px-6 py-4">
-          <h3 className="text-lg font-semibold text-gray-900">Add New Guest</h3>
-          <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-500">
-            <FiX className="h-6 w-6" />
-          </button>
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex justify-between items-center border-b px-6 py-4">
+              <h3 className="text-lg font-semibold text-gray-900">Add New Guest</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-500">
+                <FiX className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  value={newGuest.name}
+                  onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                <input
+                  type="email"
+                  value={newGuest.email}
+                  onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  placeholder="john@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={newGuest.phone}
+                  onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  placeholder="+1234567890"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Type</label>
+                <select
+                  value={newGuest.ticketType}
+                  onChange={(e) => setNewGuest({ ...newGuest, ticketType: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                >
+                  <option value="">Select ticket type</option>
+                  {eventData.ticketTypes?.map(ticket => (
+                    <option key={ticket._id} value={ticket._id}>{ticket.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Status</label>
+                <select
+                  value={newGuest.rsvpStatus}
+                  onChange={(e) => setNewGuest({ ...newGuest, rsvpStatus: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
+                <select
+                  value={newGuest.dietary}
+                  onChange={(e) => setNewGuest({ ...newGuest, dietary: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                >
+                  <option value="none">Select dietary option</option>
+                  <option value="Vegetarian">Vegetarian</option>
+                  <option value="Vegan">Vegan</option>
+                  <option value="Halal">Halal</option>
+                  <option value="Kosher">Kosher</option>
+                  <option value="Gluten-free">Gluten-Free</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <input
+                  type="text"
+                  value={newGuest.allergies}
+                  onChange={(e) => setNewGuest({ ...newGuest, allergies: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  placeholder="e.g. Peanuts, Shellfish"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 px-6 py-4 border-t">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddGuest}
+                className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
+                disabled={!newGuest.name || !newGuest.email}
+              >
+                Add Guest
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="p-6 space-y-4">
-          {/* Full Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
-            <input
-              type="text"
-              value={newGuest.name}
-              onChange={(e) => setNewGuest({ ...newGuest, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-              placeholder="John Doe"
-            />
-          </div>
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
-            <input
-              type="email"
-              value={newGuest.email}
-              onChange={(e) => setNewGuest({ ...newGuest, email: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-              placeholder="john@example.com"
-            />
-          </div>
-          {/* Phone */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-            <input
-              type="text"
-              value={newGuest.phone}
-              onChange={(e) => setNewGuest({ ...newGuest, phone: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-              placeholder="+1234567890"
-            />
-          </div>
-          {/* Ticket Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ticket Type</label>
-            <select
-              value={newGuest.ticketType}
-              onChange={(e) => setNewGuest({ ...newGuest, ticketType: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-            >
-              <option value="">Select ticket type</option>
-              {eventData.ticketTypes?.map(ticket => (
-                <option key={ticket._id} value={ticket._id}>{ticket.name}</option>
-              ))}
-            </select>
-          </div>
-          {/* RSVP Status */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">RSVP Status</label>
-            <select
-              value={newGuest.rsvpStatus}
-              onChange={(e) => setNewGuest({ ...newGuest, rsvpStatus: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-            >
-              <option value="pending">Pending</option>
-              <option value="confirmed">Confirmed</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-          {/* Dietary Requirements */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
-            <select
-              value={newGuest.dietary}
-              onChange={(e) => setNewGuest({ ...newGuest, dietary: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-            >
-              <option value="">Select dietary option</option>
-              <option value="vegetarian">Vegetarian</option>
-              <option value="vegan">Vegan</option>
-              <option value="halal">Halal</option>
-              <option value="kosher">Kosher</option>
-              <option value="gluten-free">Gluten-Free</option>
-              <option value="none">None</option>
-            </select>
-          </div>
-          {/* Allergies */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
-            <input
-              type="text"
-              value={newGuest.allergies}
-              onChange={(e) => setNewGuest({ ...newGuest, allergies: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-              placeholder="e.g. Peanuts, Shellfish"
-            />
-          </div>
-        </div>
-        <div className="flex justify-end space-x-3 px-6 py-4 border-t">
-          <button
-            onClick={() => setShowAddModal(false)}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50 shadow-sm"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleAddGuest}
-            className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
-            disabled={!newGuest.name || !newGuest.email}
-          >
-            Add Guest
-          </button>
-        </div>
-      </div>
-    </div>
-    
       )}
 
       {/* Edit Guest Modal */}
@@ -530,39 +546,33 @@ const GuestsTab = ({
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
-
-
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
-  <select
-    value={editingGuest.dietary}
-    onChange={(e) => setEditingGuest({ ...editingGuest, dietary: e.target.value })}
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-  >
-    <option value="">Select dietary option</option>
-    <option value="vegetarian">Vegetarian</option>
-    <option value="vegan">Vegan</option>
-    <option value="halal">Halal</option>
-    <option value="kosher">Kosher</option>
-    <option value="gluten-free">Gluten-Free</option>
-    <option value="none">None</option>
-  </select>
-</div>
-
-{/* Allergies */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
-  <input
-    type="text"
-    value={editingGuest.allergies}
-    onChange={(e) => setEditingGuest({ ...editingGuest, allergies: e.target.value })}
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
-    placeholder="e.g. Peanuts, Shellfish"
-  />
-</div>
-
+                <label className="block text-sm font-medium text-gray-700 mb-1">Dietary Requirements</label>
+                <select
+                  value={editingGuest.dietary}
+                  onChange={(e) => setEditingGuest({...editingGuest, dietary: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                >
+                  <option value="">Select dietary option</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="vegan">Vegan</option>
+                  <option value="halal">Halal</option>
+                  <option value="kosher">Kosher</option>
+                  <option value="gluten-free">Gluten-Free</option>
+                  <option value="none">None</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Allergies</label>
+                <input
+                  type="text"
+                  value={editingGuest.allergies}
+                  onChange={(e) => setEditingGuest({...editingGuest, allergies: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+                  placeholder="e.g. Peanuts, Shellfish"
+                />
+              </div>
             </div>
-            
             <div className="flex justify-end space-x-3 px-6 py-4 border-t">
               <button
                 onClick={() => setEditingGuest(null)}
@@ -601,7 +611,7 @@ const GuestsTab = ({
                     Select CSV File
                     <input
                       type="file"
-                      accept=".csv"
+                      accept=".csv,.xlsx,.xls"
                       className="hidden"
                       onChange={handleFileUpload}
                     />
@@ -611,7 +621,7 @@ const GuestsTab = ({
                   {csvFile ? csvFile.name : 'No file selected'}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  CSV should contain columns: Name, Email, Phone, Ticket Type, Status
+                  CSV should contain columns: Name, Email, Phone, Ticket Type, Status, Dietary, Allergies
                 </p>
               </div>
 
@@ -628,6 +638,8 @@ const GuestsTab = ({
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ticket</th>
                             <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dietary</th>
+                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Allergies</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -638,6 +650,8 @@ const GuestsTab = ({
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{row.phone || '-'}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{row.ticketType || '-'}</td>
                               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{row.rsvpStatus}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{row.dietary || '-'}</td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">{row.allergies || '-'}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -662,7 +676,7 @@ const GuestsTab = ({
                 Cancel
               </button>
               <button
-                onClick={handleBulkSave}
+                onClick={handleBulkImport}
                 className="px-4 py-2 bg-blue-900 text-white rounded-md hover:bg-blue-700 shadow-sm"
                 disabled={csvData.length === 0}
               >

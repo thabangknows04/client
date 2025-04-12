@@ -35,6 +35,12 @@ const [currentPage, setCurrentPage] = useState(1);
   const [sessions, setSessions] = useState(() => eventData?.schedule || []);
 const [boardId, setBoardId] = useState('1913778535')
   // Setup for react-big-calendar
+
+
+  //console.log(eventData.guestList);
+
+
+
   const locales = {
     'en-US': require('date-fns/locale/en-US')
   };
@@ -205,14 +211,14 @@ const [boardId, setBoardId] = useState('1913778535')
   };
 
   // Handler functions
-  const onAddGuest = () => {
+  const onAddGuest = (newGuestdata) => {
     const newGuest = {
       _id: Date.now().toString(),
-      name: "",
-      email: "",
-      phone: "",
-      allergies: "",
-      dietary: "",
+      name: newGuestdata.name,
+      email: newGuestdata.email,
+      phone: newGuestdata.phone,
+      allergies: newGuestdata.allergies,
+      dietary: newGuestdata.dietary,
       ticketType: eventData.ticketTypes[0]?._id || "",
       rsvpStatus: "pending",
       isEditing: true,
@@ -221,6 +227,7 @@ const [boardId, setBoardId] = useState('1913778535')
       ...prev,
       guestList: [newGuest, ...prev.guestList],
     }));
+    console.log(newGuest);
   };
 
 const onGuestChange = (id, field, value) => {
@@ -1056,6 +1063,7 @@ const paginatedGuests = filteredGuests.slice(
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             onGuestChange={onGuestChange}
+            guests={eventData.guestList}
             getStatusColor={getStatusColor}
             onGuestSave={onGuestSave}
             onGuestCancel={onGuestCancel}
