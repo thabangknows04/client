@@ -222,6 +222,107 @@ const [boardId, setBoardId] = useState('1913778535')
 
 
 
+  const handleTicketUpdate = async (ticketData) => {
+    try {
+      // Update state immediately for better UX
+      setEventData(prev => {
+        if (ticketData._id) {
+          // Update existing ticket
+          return {
+            ...prev,
+            ticketTypes: prev.ticketTypes.map(ticket => 
+              ticket._id === ticketData._id ? { ...ticket, ...ticketData } : ticket
+            )
+          };
+        } else {
+          // Add new ticket
+          return {
+            ...prev,
+            ticketTypes: [...prev.ticketTypes, { ...ticketData, _id: Date.now().toString() }]
+          };
+        }
+      });
+
+      // Make the API call
+      const response = await fetch(
+        ticketData._id ? 'http://localhost:5011/api/tickets/edit' : 'http://localhost:5011/api/tickets/add',
+        {
+          method: ticketData._id ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            ...ticketData,
+            eventId: eventData._id
+          })
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to update ticket');
+      }
+
+      const data = await response.json();
+      
+      // Update state with server response
+      if (data.ticketTypes) {
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: data.ticketTypes
+        }));
+      } else if (data.ticket) {
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: prev.ticketTypes.map(ticket => 
+            ticket._id === data.ticket._id ? data.ticket : ticket
+          )
+        }));
+      } else if (data.updatedTicket) {
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: prev.ticketTypes.map(ticket => 
+            ticket._id === data.updatedTicket._id ? data.updatedTicket : ticket
+          )
+        }));
+      }
+
+      toast.success(ticketData._id ? 'Ticket updated successfully!' : 'Ticket added successfully!');
+    } catch (error) {
+      console.error('Failed to update ticket:', error);
+      toast.error('Failed to update ticket');
+      
+      // Revert state on error
+      setEventData(prev => {
+        if (ticketData._id) {
+          // Revert existing ticket update
+          return {
+            ...prev,
+            ticketTypes: prev.ticketTypes.map(ticket => 
+              ticket._id === ticketData._id ? ticket : ticket
+            )
+          };
+        } else {
+          // Remove newly added ticket
+          return {
+            ...prev,
+            ticketTypes: prev.ticketTypes.filter(ticket => ticket._id !== Date.now().toString())
+          };
+        }
+      });
+    }
+  };
+  
+
+
+
+
+
+
+
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -1166,7 +1267,12 @@ const paginatedGuests = filteredGuests.slice(
         )}
 
         {activeTab === "tickets" && (
-          <TicketsTab setEventData={setEventData} eventData={eventData} formatDate={formatDate} />
+          <TicketsTab 
+            eventData={eventData} 
+            setEventData={setEventData}
+            onTicketUpdate={handleTicketUpdate}
+            formatDate={formatDate} 
+          />
         )}
 
         {activeTab === "analytics" && <AnalyticsTab eventData={eventData} />}

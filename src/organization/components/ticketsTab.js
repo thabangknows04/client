@@ -18,7 +18,7 @@ const TicketsTab = ({
   eventData,
   setEventData,
   formatDate,
-  onEventUpdated,
+  onTicketUpdate
 }) => {
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [newTicket, setNewTicket] = useState({
@@ -28,11 +28,9 @@ const TicketsTab = ({
     quantity: "",
     availableUntil: "",
   });
-  let [editingTicket, setEditingTicket] = useState(null);
- // console.log("props in TicketsTab:", { eventData, setEventData });
+  const [editingTicket, setEditingTicket] = useState(null);
 
-
- console.log(JSON.stringify(eventData));
+  console.log(JSON.stringify(eventData));
 
   const openTicketForm = () => {
     setShowTicketForm(true);
@@ -108,45 +106,36 @@ const TicketsTab = ({
   });
 
   const handleDelete = async (ticketId) => {
-    Notiflix.Confirm.show(
-      "Confirm Deletion",
-      "Are you sure you want to delete this ticket type?",
-      "Yes",
-      "No",
-      async () => {
-        try {
-          const response = await axios.delete(
-            `http://localhost:5011/api/tickets/delete/${ticketId}`
-          );
-
-          toast.success("Ticket type deleted successfully!");
-
-          if (response.data.ticketTypes && setEventData) {
-            // Update eventData with the new ticketTypes
-            setEventData((prev) => ({
-              ...prev,
-              ticketTypes: response.data.ticketTypes,
-            }));
-          }
-
-          if (onEventUpdated) {
-            onEventUpdated(); // Refresh parent if needed
-          }
-        } catch (error) {
-          console.error("Error deleting ticket type:", error);
-          toast.error("Failed to delete ticket type.");
+    try {
+      const response = await fetch(`http://localhost:5011/api/tickets/delete/${ticketId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      },
-      () => {
-        // Cancel clicked - do nothing
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete ticket');
       }
-    );
+
+      const data = await response.json();
+
+      // Update the local state immediately
+      setEventData(prev => ({
+        ...prev,
+        ticketTypes: prev.ticketTypes.filter(ticket => ticket._id !== ticketId)
+      }));
+
+      toast.success('Ticket deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+      toast.error('Failed to delete ticket');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Use the editingTicket data if we're editing, otherwise use newTicket
     const ticketData = editingTicket 
       ? {
           _id: editingTicket._id,
@@ -158,60 +147,19 @@ const TicketsTab = ({
           eventId: eventData._id
         }
       : {
-          ...newTicket,
+          name: newTicket.name,
+          description: newTicket.description,
+          price: newTicket.price,
+          quantity: newTicket.quantity,
+          availableUntil: newTicket.availableUntil,
           eventId: eventData._id
         };
 
     try {
-      const response = await fetch(
-        editingTicket
-          ? `http://localhost:5011/api/tickets/edit`
-          : `http://localhost:5011/api/tickets/add`,
-        {
-          method: editingTicket ? "PUT" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(ticketData),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('API Response:', data); // Debug log
-
-      // Update local state with the new ticket data
-      if (data.ticketTypes) {
-        // For both edit and add operations, update the entire ticketTypes array
-        setEventData(prev => ({
-          ...prev,
-          ticketTypes: data.ticketTypes
-        }));
-      } else if (data.ticket) {
-        // If we're adding a new ticket and only get the single ticket back
-        setEventData(prev => ({
-          ...prev,
-          ticketTypes: [...prev.ticketTypes, data.ticket]
-        }));
-      } else if (data.updatedTicket) {
-        // If we're editing and get the updated ticket back
-        setEventData(prev => ({
-          ...prev,
-          ticketTypes: prev.ticketTypes.map(ticket => 
-            ticket._id === data.updatedTicket._id ? data.updatedTicket : ticket
-          )
-        }));
-      }
-
-      toast.success(
-        editingTicket
-          ? "Ticket type updated successfully!"
-          : "Ticket type added successfully!"
-      );
+      // Call the parent's update function
+      await onTicketUpdate(ticketData);
+      toast.success(ticketData._id ? 'Ticket updated successfully!' : 'Ticket added successfully!');
+   
 
       // Reset form and close
       setNewTicket({
