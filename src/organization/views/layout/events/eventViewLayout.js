@@ -8,6 +8,7 @@ import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { toast } from "react-hot-toast";
 
 import AnalyticsTab from "../../../components/analyticsTab";
 import BoardTab from "../../../components/boardTab";
@@ -155,23 +156,59 @@ const [boardId, setBoardId] = useState('1913778535')
 
   const handleGuestListUpdate = async ({ eventId, newGuests, updatedGuests, removedGuestIds }) => {
     try {
-      // Update your main state with the changes
-      setEventData(prev => ({
-        ...prev,
-        guestList: [
-          // Add new guests
-          ...newGuests,
-          // Update existing guests
-          ...prev.guestList
-            .filter(g => !removedGuestIds.includes(g._id))
-            .map(g => {
-              const updated = updatedGuests.find(u => u._id === g._id);
-              return updated ? { ...g, ...updated } : g;
-            })
-        ]
-      }));
+      // First, make the API call to update the database
+      const response = await fetch('http://localhost:5011/api/guests/update-all', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          eventId,
+          newGuests,
+          updatedGuests,
+          removedGuestIds
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update guest list');
+      }
+
+      const result = await response.json();
+
+      // Update the local state with the server response
+      setEventData(prev => {
+        // Start with the existing guest list
+        let updatedGuestList = [...prev.guestList];
+
+        // Remove guests that were deleted
+        updatedGuestList = updatedGuestList.filter(g => !removedGuestIds.includes(g._id));
+
+        // Update existing guests
+        updatedGuestList = updatedGuestList.map(g => {
+          const updated = updatedGuests.find(u => u._id === g._id);
+          return updated ? { ...g, ...updated } : g;
+        });
+
+        // Add new guests from the server response
+        if (result.newGuests && result.newGuests.length > 0) {
+          updatedGuestList = [...updatedGuestList, ...result.newGuests];
+        } else {
+          // If no server response, add the new guests we sent
+          updatedGuestList = [...updatedGuestList, ...newGuests];
+        }
+
+        return {
+          ...prev,
+          guestList: updatedGuestList
+        };
+      });
+
+      toast.success('Guest list updated successfully');
     } catch (error) {
       console.error('Failed to update guest list:', error);
+      toast.error('Failed to update guest list');
     }
   };
   

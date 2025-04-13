@@ -33,6 +33,7 @@ const GuestsTab = ({
   const [editingGuest, setEditingGuest] = useState(null);
   const [localGuests, setLocalGuests] = useState([]);
   const [filteredGuests, setFilteredGuests] = useState([]);
+  const [removedGuests, setRemovedGuests] = useState([]);
 
   // Initialize local guests when component mounts or guests prop changes
   useEffect(() => {
@@ -82,7 +83,7 @@ const GuestsTab = ({
     setShowAddModal(false);
   
     // ✅ Show toast message
-    toast.success('Guest added to list. Don’t forget to save your changes.');
+    toast.success(`Guest added to list. Don't forget to save your changes.`);
   };
   
 
@@ -101,7 +102,7 @@ const GuestsTab = ({
     ));
 
     setEditingGuest(null);
-    toast.success('Guest edited successfully. Don’t forget to save your changes.');
+    toast.success(`Guest edited successfully. Don't forget to save your changes.`);
   };
 
   const handleCancelEdit = (guestId) => {
@@ -160,76 +161,60 @@ const GuestsTab = ({
 
   const handleSaveAllChanges = async () => {
     try {
-      // Prepare the data to send
-      const newGuests = localGuests
-        .filter(g => g.isNew)
-        .map(({ isNew, isEditing, ...rest }) => rest); // Remove temporary fields
-  
-        const updatedGuests = localGuests
-        .filter(g => 
-          !g.isNew && guests.some(og => 
-            og._id === g._id && (
-              og.name !== g.name ||
-              og.email !== g.email ||
-              og.phone !== g.phone ||
-              og.ticketType !== g.ticketType ||
-              og.rsvpStatus !== g.rsvpStatus ||
-              og.dietary !== g.dietary ||
-              og.allergies !== g.allergies
-            )
-          )
-        )
-        .map(({ isNew, isEditing, ...rest }) => rest);
-      
-  
-      const removedGuestIds = guests
-        .filter(og => !localGuests.some(g => g._id === og._id))
-        .map(g => g._id);
-  
-      // Prepare the payload
-      const payload = {
-        eventId: eventData._id,
-        newGuests,
-        updatedGuests,
-        removedGuestIds
-      };
-  
-      // Call the API
-      const response = await fetch('http://localhost:5011/api/guests/update-all', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      // Get the current state of all guests
+      const currentGuests = localGuests;
+      const originalGuests = guests;
+
+      // Identify new guests (those without an _id or with a temporary _id)
+      const newGuests = currentGuests.filter(g => !g._id || g._id.startsWith('temp-'));
+
+      // Identify updated guests (those with an _id that have been modified)
+      const updatedGuests = currentGuests.filter(g => {
+        if (!g._id || g._id.startsWith('temp-')) return false; // Skip new guests
+        const original = originalGuests.find(og => og._id === g._id);
+        if (!original) return false;
+        
+        // Check if any field has changed
+        return (
+          original.name !== g.name ||
+          original.email !== g.email ||
+          original.phone !== g.phone ||
+          original.ticketType !== g.ticketType ||
+          original.rsvpStatus !== g.rsvpStatus ||
+          original.dietary !== g.dietary ||
+          original.allergies !== g.allergies
+        );
       });
-  
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-  
-      const result = await response.json();
-  
-      // Update parent component with the new state
+
+      // Identify removed guests (those in original list but not in current)
+      const removedGuestIds = originalGuests
+        .filter(og => !currentGuests.some(g => g._id === og._id))
+        .map(g => g._id);
+
+      // Prepare new guests for submission (remove temporary fields)
+      const preparedNewGuests = newGuests.map(g => {
+        const { isNew, isEditing, ...rest } = g;
+        return rest;
+      });
+
+      // Call the parent's update function with the changes
       await onGuestListUpdate({
         eventId: eventData._id,
-        newGuests: result.newGuests || [], // Use server-returned data if available
-        updatedGuests: result.updatedGuests || [],
-        removedGuestIds: result.removedGuestIds || []
+        newGuests: preparedNewGuests,
+        updatedGuests,
+        removedGuestIds
       });
-  
-      // Update local state to remove temporary flags
-      setLocalGuests(prevGuests => 
-        prevGuests.map(g => ({
-          ...g,
-          isNew: false,
-          isEditing: false,
-          // Update with server-generated IDs if available
-          _id: g.isNew ? (result.newGuests?.find(ng => ng.email === g.email)?._id || g._id) : g._id
-        }))
-      );
+
+      // Clear the removed guests list after successful update
+      setRemovedGuests([]);
       
-  console.log(localGuests);
-      toast.success('Guest list saved to the database');
+      // Reset the modified state for all guests
+      setLocalGuests(prev => prev.map(g => ({ ...g, isModified: false })));
+      
+      toast.success('All changes saved successfully');
     } catch (error) {
-      toast.error('Failed to save guest list to the database. Please try again.');
+      console.error('Failed to save changes:', error);
+      toast.error('Failed to save changes');
     }
   };
   

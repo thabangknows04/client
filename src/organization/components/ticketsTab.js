@@ -62,18 +62,27 @@ const TicketsTab = ({
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (editingTicket) {
-      setEditingTicket({ ...editingTicket, [name]: value });
+      setEditingTicket(prev => ({
+        ...prev,
+        [name]: value
+      }));
     } else {
-      setNewTicket({ ...newTicket, [name]: value });
+      setNewTicket(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
 
   const handleEdit = (ticket) => {
     setEditingTicket(ticket);
     setNewTicket({
-      ...ticket,
-      availableUntil: formatDate(ticket.availableUntil, "yyyy-MM-ddTHH:mm"),
-    }); // Format for input type="datetime-local"
+      name: ticket.name,
+      description: ticket.description,
+      price: ticket.price,
+      quantity: ticket.quantity,
+      availableUntil: formatDateForInput(ticket.availableUntil),
+    });
     setShowTicketForm(true);
   };
   
@@ -137,12 +146,21 @@ const TicketsTab = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const ticketData = {
-      ...newTicket,
-      eventId: eventData._id,
-    };
-
-    console.log(ticketData);
+    // Use the editingTicket data if we're editing, otherwise use newTicket
+    const ticketData = editingTicket 
+      ? {
+          _id: editingTicket._id,
+          name: editingTicket.name,
+          description: editingTicket.description,
+          price: editingTicket.price,
+          quantity: editingTicket.quantity,
+          availableUntil: editingTicket.availableUntil,
+          eventId: eventData._id
+        }
+      : {
+          ...newTicket,
+          eventId: eventData._id
+        };
 
     try {
       const response = await fetch(
@@ -153,6 +171,7 @@ const TicketsTab = ({
           method: editingTicket ? "PUT" : "POST",
           headers: {
             "Content-Type": "application/json",
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify(ticketData),
         }
@@ -162,35 +181,48 @@ const TicketsTab = ({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      const data = await response.json();
+      console.log('API Response:', data); // Debug log
+
+      // Update local state with the new ticket data
+      if (data.ticketTypes) {
+        // For both edit and add operations, update the entire ticketTypes array
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: data.ticketTypes
+        }));
+      } else if (data.ticket) {
+        // If we're adding a new ticket and only get the single ticket back
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: [...prev.ticketTypes, data.ticket]
+        }));
+      } else if (data.updatedTicket) {
+        // If we're editing and get the updated ticket back
+        setEventData(prev => ({
+          ...prev,
+          ticketTypes: prev.ticketTypes.map(ticket => 
+            ticket._id === data.updatedTicket._id ? data.updatedTicket : ticket
+          )
+        }));
+      }
+
       toast.success(
         editingTicket
           ? "Ticket type updated successfully!"
           : "Ticket type added successfully!"
       );
 
-      if (response.ticketTypes && setEventData) {
-        // Update eventData with the new ticketTypes
-        setEventData((prev) => ({
-          ...prev,
-          ticketTypes: response.ticketTypes,
-        }));
-      }
-
-      if (onEventUpdated) {
-        onEventUpdated(); // Refresh parent if needed
-      }
-      
-      const updatedTicketTypes = editingTicket
-        ? eventData.ticketTypes.map((ticket) =>
-            ticket._id === newTicket._id ? { ...ticketData } : ticket
-          )
-        : [...eventData.ticketTypes, ticketData];
-
-
-      closeTicketForm();
-      if (onEventUpdated) {
-        onEventUpdated();
-      }
+      // Reset form and close
+      setNewTicket({
+        name: "",
+        description: "",
+        price: "",
+        quantity: "",
+        availableUntil: "",
+      });
+      setEditingTicket(null);
+      setShowTicketForm(false);
     } catch (error) {
       console.error("Error saving ticket type:", error);
       toast.error(`Failed to ${editingTicket ? "update" : "add"} ticket type.`);

@@ -220,7 +220,7 @@ const ScheduleTab = ({
   
 
   const handleDeleteSpeaker = (speaker) => {
-    let speakerId = speaker._id;
+    const speakerId = speaker._id;
 
     Notiflix.Confirm.show(
       "Confirm Deletion",
@@ -229,30 +229,47 @@ const ScheduleTab = ({
       "No",
       async () => {
         try {
-          const response = await axios.delete(
-            `http://localhost:5011/api/speaker/delete/${speakerId}`
+          const response = await fetch(
+            `http://localhost:5011/api/speakers/delete/${speakerId}`,
+            {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+              }
+            }
           );
 
-          toast.success("Speaker deleted successfully!");
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
 
-          if (response.data.speakers && setEventData) {
-            setEventData((prev) => ({
+          const data = await response.json();
+          
+          // Update the event data with the new speakers list
+          if (data.speakers && setEventData) {
+            setEventData(prev => ({
               ...prev,
-              speakers: response.data.speakers,
+              speakers: data.speakers
             }));
           }
 
-          //  setEventData((prevData) => ({
-          //    ...prevData,
-          //    speakers: result.speakers,
-          //  }));
+          // Also update any activities that were associated with this speaker
+          if (data.schedule && setEventData) {
+            setEventData(prev => ({
+              ...prev,
+              schedule: data.schedule
+            }));
+          }
+
+          toast.success("Speaker deleted successfully!");
         } catch (error) {
           console.error("Error deleting speaker:", error);
           toast.error("Failed to delete speaker.");
         }
       },
       () => {
-        // Cancel clicked — no action
+        // Cancel clicked - do nothing
       }
     );
   };
@@ -585,7 +602,7 @@ const ScheduleTab = ({
               <div className="mt-4 flex items-center">
                 <div className="flex-shrink-0">
                   <div className="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold">
-                    {/* Use initials if you don’t have speaker image */}
+                    {/* Use initials if you don't have speaker image */}
                     {speaker.name?.split(" ").map((n) => n[0]).join("").substring(0, 2)}
                   </div>
                 </div>
