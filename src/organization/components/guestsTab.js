@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { FiEdit, FiTrash2, FiUpload, FiX, FiUserPlus, FiSave } from "react-icons/fi";
 import Papa from 'papaparse';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 const GuestsTab = ({
   eventData,
@@ -58,13 +62,13 @@ const GuestsTab = ({
 
   const handleAddGuest = () => {
     if (!newGuest.name || !newGuest.email) return;
-    
+  
     const guestToAdd = {
       ...newGuest,
       _id: `temp-${Date.now()}`,
       isNew: true
     };
-    
+  
     setLocalGuests([...localGuests, guestToAdd]);
     setNewGuest({
       name: '',
@@ -76,7 +80,11 @@ const GuestsTab = ({
       rsvpStatus: 'pending'
     });
     setShowAddModal(false);
+  
+    // ✅ Show toast message
+    toast.success('Guest added to list. Don’t forget to save your changes.');
   };
+  
 
   const handleEditGuest = (guest) => {
     setLocalGuests(localGuests.map(g => 
@@ -91,7 +99,9 @@ const GuestsTab = ({
     setLocalGuests(localGuests.map(g => 
       g._id === editingGuest._id ? { ...editingGuest, isEditing: false } : g
     ));
+
     setEditingGuest(null);
+    toast.success('Guest edited successfully. Don’t forget to save your changes.');
   };
 
   const handleCancelEdit = (guestId) => {
@@ -109,6 +119,7 @@ const GuestsTab = ({
 
   const handleRemoveGuest = (guestId) => {
     setLocalGuests(localGuests.filter(g => g._id !== guestId));
+    toast.success('Guest removed from guest list');
   };
 
   const handleGuestChange = (guestId, field, value) => {
@@ -149,40 +160,80 @@ const GuestsTab = ({
 
   const handleSaveAllChanges = async () => {
     try {
-      // Separate new guests, updated guests, and unchanged guests
-      const newGuests = localGuests.filter(g => g.isNew && !g._id.startsWith('temp-'));
-      const updatedGuests = localGuests.filter(g => 
-        !g.isNew && 
-        guests.some(og => og._id === g._id && (
-          og.name !== g.name ||
-          og.email !== g.email ||
-          og.phone !== g.phone ||
-          og.ticketType !== g.ticketType ||
-          og.rsvpStatus !== g.rsvpStatus ||
-          og.dietary !== g.dietary ||
-          og.allergies !== g.allergies
-        ))
-      );
-
-
-console.log()
-
+      // Prepare the data to send
+      const newGuests = localGuests
+        .filter(g => g.isNew)
+        .map(({ isNew, isEditing, ...rest }) => rest); // Remove temporary fields
+  
+        const updatedGuests = localGuests
+        .filter(g => 
+          !g.isNew && guests.some(og => 
+            og._id === g._id && (
+              og.name !== g.name ||
+              og.email !== g.email ||
+              og.phone !== g.phone ||
+              og.ticketType !== g.ticketType ||
+              og.rsvpStatus !== g.rsvpStatus ||
+              og.dietary !== g.dietary ||
+              og.allergies !== g.allergies
+            )
+          )
+        )
+        .map(({ isNew, isEditing, ...rest }) => rest);
       
-      // Call the API with the changes
-      await onGuestListUpdate({
+  
+      const removedGuestIds = guests
+        .filter(og => !localGuests.some(g => g._id === og._id))
+        .map(g => g._id);
+  
+      // Prepare the payload
+      const payload = {
+        eventId: eventData._id,
         newGuests,
         updatedGuests,
-        removedGuests: guests.filter(og => !localGuests.some(g => g._id === og._id)).map(g => g._id)
+        removedGuestIds
+      };
+  
+      // Call the API
+      const response = await fetch('http://localhost:5011/api/guests/update-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const result = await response.json();
+  
+      // Update parent component with the new state
+      await onGuestListUpdate({
+        eventId: eventData._id,
+        newGuests: result.newGuests || [], // Use server-returned data if available
+        updatedGuests: result.updatedGuests || [],
+        removedGuestIds: result.removedGuestIds || []
+      });
+  
+      // Update local state to remove temporary flags
+      setLocalGuests(prevGuests => 
+        prevGuests.map(g => ({
+          ...g,
+          isNew: false,
+          isEditing: false,
+          // Update with server-generated IDs if available
+          _id: g.isNew ? (result.newGuests?.find(ng => ng.email === g.email)?._id || g._id) : g._id
+        }))
+      );
       
-      // Reset editing flags
-      setLocalGuests(localGuests.map(g => ({ ...g, isEditing: false, isNew: false })));
-      
+  console.log(localGuests);
+      toast.success('Guest list saved to the database');
     } catch (error) {
-      console.error('Failed to save changes:', error);
-      // Handle error (show toast, etc.)
+      toast.error('Failed to save guest list to the database. Please try again.');
     }
   };
+  
+  
 
   return (
     <>
@@ -211,27 +262,11 @@ console.log()
             <button
   onClick={handleSaveAllChanges}
   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 shadow-sm"
-  disabled={
-    !localGuests.some(g => 
-      g.isEditing || 
-      g.isNew || 
-      (
-        guests.some(og => og._id === g._id && (
-          og.name !== g.name ||
-          og.email !== g.email ||
-          og.phone !== g.phone ||
-          og.ticketType !== g.ticketType ||
-          og.rsvpStatus !== g.rsvpStatus ||
-          og.dietary !== g.dietary ||
-          og.allergies !== g.allergies
-        ))
-      )
-    ) || guests.length !== localGuests.filter(g => !g.isNew).length
-  }
 >
   <FiSave className="w-5 h-5" />
   Save All Changes
 </button>
+
 
             <div className="relative flex-grow md:w-64">
               <input
@@ -426,8 +461,8 @@ console.log()
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="declined">Declined</option>
                 </select>
               </div>
               <div>
@@ -542,8 +577,8 @@ console.log()
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-900 focus:border-transparent"
                 >
                   <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="declined">Declined</option>
                 </select>
               </div>
               <div>

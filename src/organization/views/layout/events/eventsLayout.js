@@ -700,12 +700,8 @@ const EventLayout = () => {
 
 
         {/* Events Summary Cards */}
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-          gap: 16,
-          marginBottom: 24
-        }}>
+        <div className="grid grid-cols-1  mb-6 md:grid-cols-2 lg:grid-cols-4 gap-6"
+       >
   {summaryCards.map((card, index) => (
       <SummaryCard
               key={index}
@@ -719,135 +715,111 @@ const EventLayout = () => {
 
         {/* Events Filter and Create Button */}
         <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            marginBottom: 24,
-            gap: 16,
-            "@media (min-width: 768px)": {
-              flexDirection: "row",
-              alignItems: "center",
-            },
-          }}
-        >
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+    gap: 16,
+    flexWrap: "wrap", /* Added flexWrap to handle smaller screens */
+  }}
+>
+  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+    <button
+      onClick={() => setActiveFilter("all")}
+      style={{
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 8,
+        paddingBottom: 8,
+        backgroundColor: activeFilter === "all" ? colors.primary : "white",
+        color: activeFilter === "all" ? "white" : colors.gray[800],
+        borderRadius: 8,
+        border:
+          activeFilter === "all" ? "none" : `1px solid ${colors.gray[200]}`,
+        ":hover": {
+          backgroundColor:
+            activeFilter === "all" ? colors.primaryHover : colors.gray[50],
+        },
+        transition: "colors 200ms",
+        cursor: "pointer",
+      }}
+    >
+      All Events
+    </button>
+    <button
+      onClick={() => setActiveFilter("upcoming")}
+      style={{
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 8,
+        paddingBottom: 8,
+        backgroundColor: activeFilter === "upcoming" ? colors.primary : "white",
+        color: activeFilter === "upcoming" ? "white" : colors.gray[800],
+        borderRadius: 8,
+        border:
+          activeFilter === "upcoming"
+            ? "none"
+            : `1px solid ${colors.gray[200]}`,
+        ":hover": {
+          backgroundColor:
+            activeFilter === "upcoming" ? colors.primaryHover : colors.gray[50],
+        },
+        transition: "colors 200ms",
+        cursor: "pointer",
+      }}
+    >
+      Upcoming
+    </button>
+    <button
+      onClick={() => setActiveFilter("past")}
+      style={{
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 8,
+        paddingBottom: 8,
+        backgroundColor: activeFilter === "past" ? colors.primary : "white",
+        color: activeFilter === "past" ? "white" : colors.gray[800],
+        borderRadius: 8,
+        border:
+          activeFilter === "past" ? "none" : `1px solid ${colors.gray[200]}`,
+        ":hover": {
+          backgroundColor:
+            activeFilter === "past" ? colors.primaryHover : colors.gray[50],
+        },
+        transition: "colors 200ms",
+        cursor: "pointer",
+      }}
+    >
+      Past
+    </button>
+  </div>
 
-
-
-
-
-
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              onClick={() => setActiveFilter("all")}
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                backgroundColor:
-                  activeFilter === "all" ? colors.primary : "white",
-                color: activeFilter === "all" ? "white" : colors.gray[800],
-                borderRadius: 8,
-                border:
-                  activeFilter === "all"
-                    ? "none"
-                    : `1px solid ${colors.gray[200]}`,
-                ":hover": {
-                  backgroundColor:
-                    activeFilter === "all"
-                      ? colors.primaryHover
-                      : colors.gray[50],
-                },
-                transition: "colors 200ms",
-                cursor: 'pointer',
-              }}
-            >
-              All Events
-            </button>
-            <button
-              onClick={() => setActiveFilter("upcoming")}
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                backgroundColor:
-                  activeFilter === "upcoming" ? colors.primary : "white",
-                color: activeFilter === "upcoming" ? "white" : colors.gray[800],
-                borderRadius: 8,
-                border:
-                  activeFilter === "upcoming"
-                    ? "none"
-                    : `1px solid ${colors.gray[200]}`,
-                ":hover": {
-                  backgroundColor:
-                    activeFilter === "upcoming"
-                      ? colors.primaryHover
-                      : colors.gray[50],
-                },
-                transition: "colors 200ms",
-                cursor: 'pointer',
-              }}
-            >
-              Upcoming
-            </button>
-            <button
-              onClick={() => setActiveFilter("past")}
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                backgroundColor:
-                  activeFilter === "past" ? colors.primary : "white",
-                color: activeFilter === "past" ? "white" : colors.gray[800],
-                borderRadius: 8,
-                border:
-                  activeFilter === "past"
-                    ? "none"
-                    : `1px solid ${colors.gray[200]}`,
-                ":hover": {
-                  backgroundColor:
-                    activeFilter === "past"
-                      ? colors.primaryHover
-                      : colors.gray[50],
-                },
-                transition: "colors 200ms",
-                cursor: 'pointer',
-              }}
-            >
-              Past
-            </button>
-          </div>
-          <Link
-            to="/organization/org-events-add"
-            style={{
-              width: "100%",
-              paddingLeft: 24,
-              paddingRight: 24,
-              paddingTop: 12,
-              paddingBottom: 12,
-              backgroundColor: colors.green,
-              color: "white",
-              borderRadius: 8,
-              ":hover": {
-                backgroundColor: colors.greenHover,
-              },
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 8,
-              transition: "colors 200ms",
-              textDecoration: 'none',
-              "@media (min-width: 768px)": { width: "auto" },
-            }}
-          >
-            <PlusIcon />
-            Create New Event
-          </Link>
-        </div>
+  <Link
+    to="/organization/org-events-add"
+    style={{
+      paddingLeft: 24,
+      paddingRight: 24,
+      paddingTop: 12,
+      paddingBottom: 12,
+      backgroundColor: colors.green,
+      color: "white",
+      borderRadius: 8,
+      ":hover": {
+        backgroundColor: colors.greenHover,
+      },
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      transition: "colors 200ms",
+      textDecoration: "none",
+    }}
+  >
+    <PlusIcon />
+    Create New Event
+  </Link>
+</div>
 
         {/* Events Table */}
         {filteredEvents.length === 0 ? (

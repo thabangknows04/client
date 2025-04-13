@@ -168,6 +168,18 @@ const TicketsTab = ({
           : "Ticket type added successfully!"
       );
 
+      if (response.ticketTypes && setEventData) {
+        // Update eventData with the new ticketTypes
+        setEventData((prev) => ({
+          ...prev,
+          ticketTypes: response.ticketTypes,
+        }));
+      }
+
+      if (onEventUpdated) {
+        onEventUpdated(); // Refresh parent if needed
+      }
+      
       const updatedTicketTypes = editingTicket
         ? eventData.ticketTypes.map((ticket) =>
             ticket._id === newTicket._id ? { ...ticketData } : ticket

@@ -92,7 +92,8 @@ const AnalyticsTab = ({ eventData }) => {
         bar: {
           horizontal: false,
           columnWidth: '55%',
-          endingShape: 'rounded'
+          endingShape: 'rounded',
+          borderRadius: 14 // ✅ Add border radius
         },
       },
       dataLabels: {
@@ -118,10 +119,12 @@ const AnalyticsTab = ({ eventData }) => {
         opacity: 1
       },
       colors: ['#3B82F6', '#10B981'],
+      grid: {
+        show: false // ✅ Hide grid lines
+      },
       title: {
         text: undefined
       },
-      
       tooltip: {
         y: {
           formatter: function (val) {
@@ -131,172 +134,225 @@ const AnalyticsTab = ({ eventData }) => {
       }
     }
   };
+  
 
-  const revenueProjectionBarChart = {
-    series: [{
-      name: 'Potential Revenue',
-      data: ticketSales
-    }],
-    options: {
-      chart: {
-        type: 'bar',
-        height: 350,
-        toolbar: {
-          show: false
-        }
-      },
-      plotOptions: {
-        bar: {
-          borderRadius: 4,
-          horizontal: false,
-        }
-      },
-      dataLabels: {
-        enabled: false
-      },
-      xaxis: {
-        categories: ticketNames,
-        title: {
-          text: 'Ticket Type'
-        }
-      },
-      yaxis: {
-        title: {
-          text: 'Revenue (ZAR)'
-        }
-      },
-      colors: ['#6366F1'],
-      title: {
-        text: undefined
+ const revenueProjectionBarChart = {
+  series: [{
+    name: 'Potential Revenue',
+    data: ticketSales
+  }],
+  options: {
+    chart: {
+      type: 'bar',
+      height: 350,
+      toolbar: {
+        show: false
       }
-      ,
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return "ZAR " + val.toLocaleString();
-          }
+    },
+    plotOptions: {
+      bar: {
+        borderRadius: 14, // ✅ Increased border radius
+        horizontal: false
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    xaxis: {
+      categories: ticketNames,
+      title: {
+        text: 'Ticket Type'
+      }
+    },
+    yaxis: {
+      title: {
+        text: 'Revenue (ZAR)'
+      }
+    },
+    colors: ['#6366F1'],
+    grid: {
+      show: false // ✅ Hide grid lines
+    },
+    title: {
+      text: undefined
+    },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return "ZAR " + val.toLocaleString();
         }
       }
     }
-  };
+  }
+};
 
-  const ticketAvailabilityLineChart = {
-    series: ticketAvailability,
-    options: {
-      chart: {
-        type: 'line',
-        height: 350,
-        toolbar: {
-          show: false
-        }
-      },
-      stroke: {
-        curve: 'smooth',
-        width: 2
-      },
-      markers: {
-        size: 5
-      },
-      xaxis: {
-        categories: ['Available', 'Projected Sold'],
-        title: {
-          text: 'Availability Status'
-        }
-      },
-      yaxis: {
-        title: {
-          text: 'Ticket Count'
-        }
-      },
-      colors: ['#F59E0B', '#EF4444', '#10B981'],
-      title: {
-        text: undefined
+
+const ticketAvailabilityLineChart = {
+  series: ticketAvailability,
+  options: {
+    chart: {
+      type: 'line',
+      height: 350,
+      toolbar: {
+        show: false
       }
-      ,
-      tooltip: {
-        y: {
-          formatter: function (val) {
-            return val + " tickets";
-          }
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    markers: {
+      size: 5
+    },
+    xaxis: {
+      categories: ['Available', 'Projected Sold'],
+      title: {
+        text: 'Availability Status'
+      }
+    },
+    yaxis: {
+      title: {
+        text: 'Ticket Count'
+      }
+    },
+    grid: {
+      show: false // ✅ Removed grid lines
+    },
+    colors: ['#F59E0B', '#EF4444', '#10B981'],
+    title: {
+      text: undefined
+    },
+    tooltip: {
+      y: {
+        formatter: function (val) {
+          return val + " tickets";
         }
       }
     }
-  };
+  }
+};
+
 
   const activityDurationPieChart = {
     series: activityDurations,
     options: {
       chart: {
         type: 'pie',
-        height: 350
+        height: 350,
       },
       labels: activities,
       colors: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'],
       title: {
         text: undefined
-      }
-      ,
-      responsive: [{
-        breakpoint: 480,
-        options: {
-          chart: {
-            width: 200
-          },
-          legend: {
-            position: 'bottom'
-          }
+      },
+      legend: {
+        position: 'bottom', // ✅ Move legend under the chart
+        horizontalAlign: 'center',
+        fontSize: '14px',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 12
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5
         }
-      }],
+      },
       tooltip: {
         y: {
           formatter: function (val) {
             return val + " hours";
           }
         }
-      }
+      },
+      responsive: [{
+        breakpoint: 480,
+        options: {
+          chart: {
+            width: 250
+          },
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }]
     }
   };
+  
 
   const speakerEngagementDonutChart = {
     series: speakerActivities,
     options: {
       chart: {
         type: 'donut',
-        height: 350
+        height: 350,
       },
       labels: speakerNames,
       colors: ['#3B82F6', '#10B981', '#F59E0B'],
       title: {
         text: undefined
-      }
-      ,
+      },
+      legend: {
+        position: 'bottom', // ✅ Legend under chart
+        horizontalAlign: 'center',
+        fontSize: '14px',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 12
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5
+        }
+      },
+      plotOptions: {
+        pie: {
+          donut: {
+            size: '70%',
+            labels: {
+              show: true,
+              name: {
+                show: true,
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#374151'
+              },
+              value: {
+                show: true,
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#6B7280'
+              },
+              total: {
+                show: true,
+                label: 'Total Activities',
+                fontSize: '14px',
+                fontWeight: 500,
+                color: '#6B7280',
+                formatter: function (w) {
+                  return w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                }
+              }
+            }
+          }
+        }
+      },
       responsive: [{
         breakpoint: 480,
         options: {
           chart: {
-            width: 200
+            width: 250
           },
           legend: {
             position: 'bottom'
           }
         }
-      }],
-      plotOptions: {
-        pie: {
-          donut: {
-            labels: {
-              show: true,
-              total: {
-                show: true,
-                label: 'Total Activities',
-                color: '#6B7280'
-              }
-            }
-          }
-        }
-      }
+      }]
     }
   };
+  
 
   const ticketPriceRadialChart = {
     series: ticketPrices,
@@ -346,13 +402,38 @@ const AnalyticsTab = ({ eventData }) => {
     options: {
       chart: {
         type: 'radar',
-        height: 350,
+        height: 420, // Increased height
         toolbar: {
           show: false
+        },
+        dropShadow: {
+          enabled: true,
+          blur: 4,
+          left: 2,
+          top: 2
         }
       },
+      stroke: {
+        width: 2,
+        colors: ['#3B82F6']
+      },
+      fill: {
+        opacity: 0.3,
+        colors: ['#3B82F6']
+      },
+      markers: {
+        size: 6,
+        colors: ['#3B82F6'],
+        strokeColor: '#fff',
+        strokeWidth: 2
+      },
       xaxis: {
-        categories: speakerNames
+        categories: speakerNames,
+        labels: {
+          style: {
+            fontSize: '14px'
+          }
+        }
       },
       yaxis: {
         show: false,
@@ -361,10 +442,6 @@ const AnalyticsTab = ({ eventData }) => {
       colors: ['#3B82F6'],
       title: {
         text: undefined
-      }
-      ,
-      markers: {
-        size: 5
       },
       tooltip: {
         y: {
@@ -375,7 +452,7 @@ const AnalyticsTab = ({ eventData }) => {
       }
     }
   };
-
+  
   const eventDurationGaugeChart = {
     series: [eventDurationDays],
     options: {
@@ -436,7 +513,6 @@ const AnalyticsTab = ({ eventData }) => {
       
     }
   };
-
   const speakerEngagementHeatmap = {
     series: [{
       name: 'Engagement',
@@ -453,14 +529,48 @@ const AnalyticsTab = ({ eventData }) => {
       dataLabels: {
         enabled: false
       },
-      colors: ['#10B981'],
-      title: {
-        text: undefined
-      }
-      ,
+      colors: ['#D1FAE5', '#6EE7B7', '#10B981', '#047857'], // Gradient green shades
+      plotOptions: {
+        heatmap: {
+          shadeIntensity: 0.5,
+          radius: 14, // ✅ Rounded corners
+          useFillColorAsStroke: true,
+          colorScale: {
+            ranges: [
+              {
+                from: 0,
+                to: 1,
+                name: 'Low',
+                color: '#D1FAE5'
+              },
+              {
+                from: 2,
+                to: 4,
+                name: 'Medium',
+                color: '#6EE7B7'
+              },
+              {
+                from: 5,
+                to: 7,
+                name: 'High',
+                color: '#10B981'
+              },
+              {
+                from: 8,
+                to: 100,
+                name: 'Very High',
+                color: '#047857'
+              }
+            ]
+          }
+        }
+      },
       xaxis: {
         type: 'category',
         categories: speakerNames
+      },
+      title: {
+        text: undefined
       },
       tooltip: {
         y: {
@@ -471,6 +581,7 @@ const AnalyticsTab = ({ eventData }) => {
       }
     }
   };
+  
 
   const ticketPriceTrendAreaChart = {
     series: [{
@@ -503,11 +614,13 @@ const AnalyticsTab = ({ eventData }) => {
           text: 'Price (ZAR)'
         }
       },
+      grid: {
+        show: false // ✅ Grid removed
+      },
       colors: ['#8B5CF6'],
       title: {
         text: undefined
       },
-      
       tooltip: {
         y: {
           formatter: function (val) {
@@ -526,6 +639,7 @@ const AnalyticsTab = ({ eventData }) => {
       }
     }
   };
+  
 
   return (
     <div className="bg-gray-50 p-0 rounded-lg">
@@ -558,7 +672,20 @@ const AnalyticsTab = ({ eventData }) => {
   {/* Second Row - Full width charts */}
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
     {/* Chart 3 */}
-    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+      <h3 className="text-lg font-semibold text-gray-700 mb-4">Activity Duration</h3>
+      <ReactApexChart 
+        options={activityDurationPieChart.options} 
+        series={activityDurationPieChart.series} 
+        type="pie" 
+        height={300} 
+      />
+    </div>
+    
+    {/* Chart 4 */}
+ 
+    
+ <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
       <h3 className="text-lg font-semibold text-gray-700 mb-4">Ticket Availability</h3>
   
   <ReactApexChart 
@@ -570,18 +697,7 @@ const AnalyticsTab = ({ eventData }) => {
 
 
     </div>
-    
-    {/* Chart 4 */}
-    <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Activity Duration</h3>
-      <ReactApexChart 
-        options={activityDurationPieChart.options} 
-        series={activityDurationPieChart.series} 
-        type="pie" 
-        height={300} 
-      />
-    </div>
-    
+
     {/* Chart 5 */}
     <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
       <h3 className="text-lg font-semibold text-gray-700 mb-4">Speaker Engagement</h3>

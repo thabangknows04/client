@@ -22,6 +22,8 @@ const formatDate = (dateString) => {
   return format(date, "MMM d, yyyy");
 };
 
+
+
 const EventViewLayout = () => {
   const { eventId } = useParams();
   const [eventData, setEventData] = useState(null);
@@ -52,6 +54,7 @@ const [boardId, setBoardId] = useState('1913778535')
     locales,
   });
 
+  
   // Define the view components
   const BoardView = () => (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -145,6 +148,43 @@ const [boardId, setBoardId] = useState('1913778535')
     }
   }, [eventId]);
 
+
+
+
+
+
+  const handleGuestListUpdate = async ({ eventId, newGuests, updatedGuests, removedGuestIds }) => {
+    try {
+      // Update your main state with the changes
+      setEventData(prev => ({
+        ...prev,
+        guestList: [
+          // Add new guests
+          ...newGuests,
+          // Update existing guests
+          ...prev.guestList
+            .filter(g => !removedGuestIds.includes(g._id))
+            .map(g => {
+              const updated = updatedGuests.find(u => u._id === g._id);
+              return updated ? { ...g, ...updated } : g;
+            })
+        ]
+      }));
+    } catch (error) {
+      console.error('Failed to update guest list:', error);
+    }
+  };
+  
+
+
+
+
+
+
+
+
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -199,11 +239,11 @@ const [boardId, setBoardId] = useState('1913778535')
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "confirmed":
+      case "accepted":
         return "bg-green-100 text-green-800";
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
+      case "declined":
         return "bg-red-100 text-red-800";
       default:
         return "bg-gray-100 text-gray-800";
@@ -508,14 +548,14 @@ const paginatedGuests = filteredGuests.slice(
                     </p>
                     <p className="text-3xl font-bold text-blue-900 mt-2">
                       {eventData?.guestList?.filter(
-                        (g) => g.rsvpStatus === "confirmed"
+                        (g) => g.rsvpStatus === "accepted"
                       ).length || 0}
                     </p>
                     <p className="text-sm text-gray-500 mt-1">
                       {eventData?.guestList?.length
                         ? `${Math.round(
                             (eventData.guestList.filter(
-                              (g) => g.rsvpStatus === "confirmed"
+                              (g) => g.rsvpStatus === "accepted"
                             ).length /
                               eventData.guestList.length) *
                               100
@@ -941,7 +981,7 @@ const paginatedGuests = filteredGuests.slice(
                         {eventData.guestList?.length
                           ? `${Math.round(
                               (eventData.guestList.filter(
-                                (g) => g.rsvpStatus === "confirmed"
+                                (g) => g.rsvpStatus === "accepted"
                               ).length /
                                 eventData.guestList.length) *
                                 100
@@ -969,12 +1009,12 @@ const paginatedGuests = filteredGuests.slice(
             </div>
                     <span className="text-sm font-semibold">
                       {eventData.guestList?.filter(
-                        (g) => g.rsvpStatus === "confirmed"
+                        (g) => g.rsvpStatus === "accepted"
                       ).length || 0}
                       {eventData.guestList?.length
                         ? ` (${Math.round(
                             (eventData.guestList.filter(
-                              (g) => g.rsvpStatus === "confirmed"
+                              (g) => g.rsvpStatus === "accepted"
                             ).length /
                               eventData.guestList.length) *
                               100
@@ -1036,12 +1076,12 @@ const paginatedGuests = filteredGuests.slice(
               <p className="text-sm text-gray-600">
                         <span
                           className={`font-medium ${
-                            guest.rsvpStatus === "cancelled"
+                            guest.rsvpStatus === "declined"
                               ? "text-red-600"
                               : "text-green-600"
                           }`}
                         >
-                          {guest.rsvpStatus === "cancelled"
+                          {guest.rsvpStatus === "declined"
                             ? "Cancellation"
                             : "New RSVP"}
                         </span>{" "}
@@ -1061,6 +1101,8 @@ const paginatedGuests = filteredGuests.slice(
             filteredGuests={filteredGuests}
             onAddGuest={onAddGuest}
             searchTerm={searchTerm}
+            onGuestListUpdate={handleGuestListUpdate}
+
             setSearchTerm={setSearchTerm}
             onGuestChange={onGuestChange}
             guests={eventData.guestList}
