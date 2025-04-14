@@ -5,7 +5,7 @@ import { confirmAlert } from 'react-confirm-alert';
 import 'react-confirm-alert/src/react-confirm-alert.css';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { FiEdit, FiTrash2, FiPlus, FiClock, FiUser } from "react-icons/fi";
+import { FiEye, FiTrash2, FiPlus, FiClock, FiUser } from "react-icons/fi";
 
 // Main component
 const EventLayout = () => {
@@ -525,8 +525,8 @@ const EventLayout = () => {
                                   onClick={() => handleEditEvent(event._id)}
                                   className="inline-flex items-center px-3 py-1.5 mr-3 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                 >
-                                  <FiEdit className="w-4 h-4 mr-1.5" />
-                                  Edit
+                                  <FiEye className="w-4 h-4 mr-1.5" />
+                                  View
                                 </button>
                                 <button
                                 onClick={() => handleDeleteEvent(event._id)}

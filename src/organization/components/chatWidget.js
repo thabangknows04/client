@@ -51,6 +51,86 @@ const ChatWidget = () => {
     }
   };
   
+  const formatMessage = (content) => {
+    // Check if content is a string
+    if (typeof content !== 'string') return content;
+
+    // Split content into sections based on markdown-like syntax
+    const sections = content.split(/(?=#{1,6}\s|```|`|\*{1,2}|_{1,2}|\[|\n-|\n\d+\.)/);
+
+    return sections.map((section, index) => {
+      // Handle headings
+      if (section.match(/^#{1,6}\s/)) {
+        const level = section.match(/^#+/)[0].length;
+        const text = section.replace(/^#+\s/, '');
+        return React.createElement(`h${level}`, { 
+          key: index,
+          className: `text-${7-level}xl font-bold mb-2 mt-4 text-gray-800`
+        }, text);
+      }
+
+      // Handle code blocks
+      if (section.startsWith('```')) {
+        const code = section.replace(/^```\w*\n?|\n?```$/g, '');
+        return (
+          <pre key={index} className="bg-gray-100 p-4 rounded-lg overflow-x-auto my-4">
+            <code className="text-sm font-mono">{code}</code>
+          </pre>
+        );
+      }
+
+      // Handle inline code
+      if (section.startsWith('`')) {
+        const code = section.replace(/^`|`$/g, '');
+        return (
+          <code key={index} className="bg-gray-100 px-2 py-1 rounded text-sm font-mono">
+            {code}
+          </code>
+        );
+      }
+
+      // Handle lists
+      if (section.startsWith('\n-') || section.startsWith('\n*')) {
+        const items = section.split('\n').filter(item => item.trim());
+        return (
+          <ul key={index} className="list-disc pl-6 my-2 space-y-1">
+            {items.map((item, i) => (
+              <li key={i} className="text-gray-700">{item.replace(/^[-*]\s/, '')}</li>
+            ))}
+          </ul>
+        );
+      }
+
+      // Handle numbered lists
+      if (section.match(/^\n\d+\./)) {
+        const items = section.split('\n').filter(item => item.trim());
+        return (
+          <ol key={index} className="list-decimal pl-6 my-2 space-y-1">
+            {items.map((item, i) => (
+              <li key={i} className="text-gray-700">{item.replace(/^\d+\.\s/, '')}</li>
+            ))}
+          </ol>
+        );
+      }
+
+      // Handle bold and italic text
+      let formattedText = section;
+      formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      formattedText = formattedText.replace(/_(.*?)_/g, '<em>$1</em>');
+
+      // Handle links
+      formattedText = formattedText.replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-blue-600 hover:underline" target="_blank" rel="noopener noreferrer">$1</a>');
+
+      return (
+        <p 
+          key={index} 
+          className="text-gray-700 mb-2"
+          dangerouslySetInnerHTML={{ __html: formattedText }}
+        />
+      );
+    });
+  };
 
   return (
     <div className="font-sans ">
@@ -111,11 +191,19 @@ const ChatWidget = () => {
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[75%] px-4 py-2 rounded-xl ${message.role === 'user'
-                        ? 'bg-gradient-to-r from-blue-200 to-blue-300 text-white rounded-br-none'
-                        : 'bg-gray-200 text-gray-800 rounded-bl-none'}`}
+                      className={`max-w-[75%] px-4 py-2 rounded-xl ${
+                        message.role === 'user'
+                          ? 'bg-gradient-to-r from-blue-200 to-blue-300 text-white rounded-br-none'
+                          : 'bg-white text-gray-800 rounded-bl-none shadow-sm'
+                      }`}
                     >
-                      {message.content}
+                      {message.role === 'assistant' ? (
+                        <div className="prose prose-sm max-w-none">
+                          {formatMessage(message.content)}
+                        </div>
+                      ) : (
+                        message.content
+                      )}
                     </div>
                   </div>
                 ))}

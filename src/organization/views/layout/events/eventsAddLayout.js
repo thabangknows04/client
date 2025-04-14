@@ -352,9 +352,9 @@ const EventAddLayout = () => {
   const prevStep = () => setCurrentStep((prev) => prev - 1);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden md:ml-64">
+    <div className="flex-1 flex flex-col overflow-hidden md:ml-64" >
       {/* Wizard Content */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6">
+      <main style={{overflowX: 'hidden'}} className="flex-1 overflow-y-auto p-4 md:p-6">
         <div className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-[#2D1E3E]">
             {currentStep === 1 && "Create New Event"}
@@ -500,12 +500,7 @@ const EventAddLayout = () => {
               <div className="space-x-4">
                 {currentStep < 3 ? (
                   <>
-                    <button
-                      type="button"
-                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      Save Draft
-                    </button>
+                 
                     <button
                       type="button"
                       onClick={nextStep}
@@ -516,13 +511,7 @@ const EventAddLayout = () => {
                   </>
                 ) : (
                   <>
-                    <button
-                      type="button"
-                      onClick={prevStep}
-                      className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors"
-                    >
-                      Save Draft
-                    </button>
+          
                     <button
                       type="submit"
                       className="px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-[#3a2a4d] transition-colors"
