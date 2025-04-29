@@ -7,6 +7,8 @@ import OrganizationDashboard from "./organization/views/dashboard";
 import OrgEvents from './organization/views/events'
 import OrgEventsAdd from './organization/views/eventsAdd'
 import OrgEventsView from './organization/views/eventView'
+import EventEdit from './organization/views/eventsEdit'
+
 
 import NotFound from "./views/NotFound";
 import "./App.css";
@@ -27,7 +29,7 @@ function App() {
         {/* Protected Organization Routes */}
         <Route path="/organization" element={<ProtectedRoute />}>
 
-
+        <Route path="event-edit/:eventId" element={<EventEdit />} />
           <Route path="dashboard" element={<OrganizationDashboard />} />
           <Route path="org-events" element={<OrgEvents />} />
           <Route path="org-events-add" element={<OrgEventsAdd />} />

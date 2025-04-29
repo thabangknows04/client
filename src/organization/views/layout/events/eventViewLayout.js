@@ -21,9 +21,8 @@ const formatDate = (dateString) => {
   if (!dateString) return "";
   const date = new Date(dateString);
   return format(date, "MMM d, yyyy");
-};
-
-
+};=6-=]
+=   ≥     21§wq
 
 const EventViewLayout = () => {
   const { eventId } = useParams();
