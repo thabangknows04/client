@@ -85,8 +85,8 @@ const ScheduleTab = ({
       };
   
       const url = isEditing
-        ? "http://localhost:5011/api/activities/edit"
-        : "http://localhost:5011/api/activities/add";
+        ? "https://optimus-tool.onrender.com:5011/api/activities/edit"
+        : "https://optimus-tool.onrender.com:5011/api/activities/add";
   
       const method = isEditing ? "PUT" : "POST";
   
@@ -139,8 +139,8 @@ const ScheduleTab = ({
     console.log(JSON.stringify(speakerData));
 
     const url = editingSpeaker
-      ? "http://localhost:5011/api/speakers/edit"
-      : "http://localhost:5011/api/speakers/add";
+      ? "https://optimus-tool.onrender.com:5011/api/speakers/edit"
+      : "https://optimus-tool.onrender.com:5011/api/speakers/add";
 
     try {
       const response = await fetch(url, {
@@ -195,7 +195,7 @@ const ScheduleTab = ({
       async () => {
         try {
           const response = await axios.delete(
-            `http://localhost:5011/api/activities/delete/${activityId}`
+            `https://optimus-tool.onrender.com:5011/api/activities/delete/${activityId}`
           );
   
           toast.success("Activity deleted successfully!");
@@ -230,7 +230,7 @@ const ScheduleTab = ({
       async () => {
         try {
           const response = await fetch(
-            `http://localhost:5011/api/speakers/delete/${speakerId}`,
+            `https://optimus-tool.onrender.com:5011/api/speakers/delete/${speakerId}`,
             {
               method: "DELETE",
               headers: {

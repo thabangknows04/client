@@ -109,7 +109,7 @@ const [boardId, setBoardId] = useState('1913778535')
 
         console.log("Fetching event data for ID:", eventId);
         const response = await fetch(
-          `http://localhost:5011/api/events/get/${eventId}`,
+          `https://optimus-tool.onrender.com:5011/api/events/get/${eventId}`,
           {
             method: "GET",
             headers: {
@@ -156,7 +156,7 @@ const [boardId, setBoardId] = useState('1913778535')
   const handleGuestListUpdate = async ({ eventId, newGuests, updatedGuests, removedGuestIds }) => {
     try {
       // First, make the API call to update the database
-      const response = await fetch('http://localhost:5011/api/guests/update-all', {
+      const response = await fetch('https://optimus-tool.onrender.com:5011/api/guests/update-all', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +244,7 @@ const [boardId, setBoardId] = useState('1913778535')
 
       // Make the API call
       const response = await fetch(
-        ticketData._id ? 'http://localhost:5011/api/tickets/edit' : 'http://localhost:5011/api/tickets/add',
+        ticketData._id ? 'https://optimus-tool.onrender.com:5011/api/tickets/edit' : 'https://optimus-tool.onrender.com:5011/api/tickets/add',
         {
           method: ticketData._id ? 'PUT' : 'POST',
           headers: {

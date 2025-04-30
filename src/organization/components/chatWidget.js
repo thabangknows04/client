@@ -34,7 +34,7 @@ const ChatWidget = () => {
   
     try {
       // Call your backend API that connects to Cohere
-      const response = await axios.post('http://localhost:5011/api/chat', {
+      const response = await axios.post('https://optimus-tool.onrender.com:5011/api/chat', {
         messages: [...messages, userMessage]
       });
   

@@ -107,7 +107,7 @@ const TicketsTab = ({
 
   const handleDelete = async (ticketId) => {
     try {
-      const response = await fetch(`http://localhost:5011/api/tickets/delete/${ticketId}`, {
+      const response = await fetch(`https://optimus-tool.onrender.com:5011/api/tickets/delete/${ticketId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
