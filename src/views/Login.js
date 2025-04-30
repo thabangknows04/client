@@ -26,7 +26,7 @@ const LoginPage = () => {
     };
 
     try {
-      const response = await fetch(`https://optimus-tool.onrender.com:5011/api/auth/login`, {
+      const response = await fetch(`https://optimus-tool.onrender.com/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
