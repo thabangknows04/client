@@ -28,21 +28,13 @@
     "react-toastify": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
-<<<<<<< HEAD
- "scripts": {
-  "start": "react-scripts start",
-  "build": "react-scripts build",
-  "test": "react-scripts test",
-  "eject": "react-scripts eject"
- },
-=======
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
->>>>>>> ed03c69 (...)
+
   "eslintConfig": {
     "extends": [
       "react-app",
