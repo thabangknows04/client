@@ -20,12 +20,12 @@
     "react-toastify": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
-  "scripts": {
-    "kill-port": "lsof -t -i :3000 | xargs kill -9",
-    "start": "npm run kill-port && react-scripts start",
-    "dev": "npm run kill-port && react-scripts start",
-    "start-client": "react-scripts start"
-  },
+ "scripts": {
+  "start": "react-scripts start",
+  "build": "react-scripts build",
+  "test": "react-scripts test",
+  "eject": "react-scripts eject"
+ },
   "eslintConfig": {
     "extends": [
       "react-app",
