@@ -87,7 +87,7 @@ const HomeLayout = ({ setSidebarOpen }) => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-500 text-sm">Budget Used</p>
-              <h3 className="text-2xl font-bold mt-1">$2,450</h3>
+              <h3 className="text-2xl font-bold mt-1">R2,450</h3>
             </div>
             <div className="p-3 rounded-lg bg-blue-100 text-blue-600">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./BoardTab.css"; // Create this CSS file for styling
+import "./BoardTab.css"; // We'll create this CSS file
 
 const BoardTab = ({ eventData, boardId }) => {
   const [board, setBoard] = useState(null);
@@ -12,7 +12,6 @@ const BoardTab = ({ eventData, boardId }) => {
   const MONDAY_API_TOKEN =
     "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjQ5OTEzNDM0MywiYWFpIjoxMSwidWlkIjo3NDgxNjI1NCwiaWFkIjoiMjAyNS0wNC0xMlQxMzoxNDo0NC4xMDNaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MjkwNDU3MjQsInJnbiI6ImV1YzEifQ.woKmOAsMM60MGYsDNN6sRfWiReaMFEMTeSW_ums8YbM";
 
-  // Load board when component mounts or when boardId changes
   useEffect(() => {
     if (boardId) {
       loadBoard(boardId);
@@ -22,43 +21,43 @@ const BoardTab = ({ eventData, boardId }) => {
   const loadBoard = async (boardId) => {
     setIsLoading(true);
     setError(null);
-  
+
     try {
       const boardQuery = `
-        query {
-  boards(ids: ${boardId}) {
+      query {
+boards(ids: ${boardId}) {
+  id
+  name
+  description
+  groups {
     id
-    name
-    description
-    groups {
+    title
+  }
+  columns {
+    id
+    title
+    type
+  }
+  items_page(limit: 25) {
+    items {
       id
-      title
-    }
-    columns {
-      id
-      title
-      type
-    }
-    items_page(limit: 25) {
-      items {
+      name
+      group {
         id
-        name
-        group {
-          id
-        }
-        column_values {
-          id
-          text
-          value
-          type
-        }
+      }
+      column_values {
+        id
+        text
+        value
+        type
       }
     }
   }
 }
+}
 
-      `;
-  
+    `; // Your existing query
+
       const response = await fetch("https://api.monday.com/v2", {
         method: "POST",
         headers: {
@@ -67,16 +66,14 @@ const BoardTab = ({ eventData, boardId }) => {
         },
         body: JSON.stringify({ query: boardQuery }),
       });
-  
+
       const result = await response.json();
-  
+
       if (!response.ok || result.errors) {
         throw new Error(result.errors?.[0]?.message || "Failed to load board");
       }
-  
+
       const boardData = result.data.boards[0];
-  
-      // Set board structure and items separately
       setBoard({
         id: boardData.id,
         name: boardData.name,
@@ -84,8 +81,6 @@ const BoardTab = ({ eventData, boardId }) => {
         groups: boardData.groups,
         columns: boardData.columns,
       });
-      
-  
       setItems(boardData.items_page.items);
     } catch (err) {
       console.error("Error loading board:", err);
@@ -94,7 +89,6 @@ const BoardTab = ({ eventData, boardId }) => {
       setIsLoading(false);
     }
   };
-  
 
   const getColumnValue = (item, columnTitle) => {
     const column = item.column_values.find((col) => col.title === columnTitle);
@@ -102,7 +96,6 @@ const BoardTab = ({ eventData, boardId }) => {
   };
 
   const getStatusColor = (statusText) => {
-    // Simple status color mapping - customize as needed
     const statusColors = {
       done: "#00c875",
       "working on it": "#fdab3d",
@@ -113,9 +106,13 @@ const BoardTab = ({ eventData, boardId }) => {
   };
 
   const renderKanbanView = () => {
-    if (!board || !items.length) return null;
+    if (!board || !items.length)
+      return (
+        <div className="empty-state">
+          <p>No items found in this board</p>
+        </div>
+      );
 
-    // Group items by their group (column in Kanban)
     const groupedItems = {};
     board.groups.forEach((group) => {
       groupedItems[group.id] = items.filter(
@@ -124,82 +121,106 @@ const BoardTab = ({ eventData, boardId }) => {
     });
 
     return (
-        <div className="board-tab">
-        <h2>{board?.name}</h2>
-  
-        {board?.groups && (
-          <div className="kanban-container">
-            {board.groups.map((group) => (
-              <div
-                key={group.id}
-                className="kanban-column"
-                style={{ borderTop: `3px solid ${group.color}` }}
-              >
-                <h3 className="kanban-column-title">{group.title}</h3>
-                <div className="kanban-cards">
-                  {groupedItems[group.id]?.map((item) => (
-                    <div key={item.id} className="kanban-card">
-                      <h4>{item.name}</h4>
-                      <div className="card-details">
-                        <span
-                          className="status-indicator"
-                          style={{
-                            backgroundColor: getStatusColor(getColumnValue(item, 'project_status')),
-                          }}
-                        />
-                        <p>{getColumnValue(item, 'project_status')}</p>
-                        <p>Due: {getColumnValue(item, 'date')}</p>
-  
-                        {item.subitems && item.subitems.length > 0 && (
-                          <p className="subtasks">
-                            {item.subitems.length} subtasks
-                          </p>
-                        )}
-                      </div>
+      <div className="kanban-grid">
+        {board.groups.map((group) => (
+          <div key={group.id} className="kanban-column">
+            <div className="column-header">
+              <h3 className="column-title">{group.title}</h3>
+              <span className="item-count">
+                {groupedItems[group.id]?.length || 0}
+              </span>
+            </div>
+            <div className="kanban-cards">
+              {groupedItems[group.id]?.map((item) => (
+                <div key={item.id} className="kanban-card">
+                  <h4 className="card-title">{item.name}</h4>
+                  <div className="card-meta">
+                    <div className="status-badge">
+                      <span
+                        className="status-dot"
+                        style={{
+                          backgroundColor: getStatusColor(
+                            getColumnValue(item, "project_status")
+                          ),
+                        }}
+                      />
+                      <span>
+                        {getColumnValue(item, "project_status") || "No status"}
+                      </span>
                     </div>
-                  ))}
+                    {getColumnValue(item, "date") && (
+                      <div className="due-date">
+                        <svg className="calendar-icon" viewBox="0 0 24 24">
+                          <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
+                        </svg>
+                        <span>{getColumnValue(item, "date")}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        )}
+        ))}
       </div>
-   
     );
   };
 
   const renderTableView = () => {
-    if (!board || !items.length) return null;
+    if (!board || !items.length)
+      return (
+        <div className="empty-state">
+          <p>No items found in this board</p>
+        </div>
+      );
 
-    // Find important columns to display (limit to 5 for demo)
     const displayColumns = board.columns
       .filter((col) => ["name", "status", "date", "text"].includes(col.type))
       .slice(0, 5);
 
     return (
-      <table className="table-view">
-        <thead>
-          <tr>
-            <th>Name</th>
-            {displayColumns.map((col) => (
-              <th key={col.id}>{col.title}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.id}>
-              <td>{item.name}</td>
-              {displayColumns.map((col) => {
-                const columnValue = item.column_values.find(
-                  (cv) => cv.id === col.id
-                );
-                return <td key={col.id}>{columnValue?.text || "-"}</td>;
-              })}
+      <div className="table-container">
+        <table className="board-table">
+          <thead>
+            <tr>
+              <th>Task</th>
+              {displayColumns.map((col) => (
+                <th key={col.id}>{col.title}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td className="task-cell">
+                  <div className="task-name">{item.name}</div>
+                </td>
+                {displayColumns.map((col) => {
+                  const columnValue = item.column_values.find(
+                    (cv) => cv.id === col.id
+                  );
+                  const value = columnValue?.text || "-";
+                  return (
+                    <td key={col.id}>
+                      {col.type === "status" ? (
+                        <div className="status-cell">
+                          <span
+                            className="status-dot"
+                            style={{ backgroundColor: getStatusColor(value) }}
+                          />
+                          {value}
+                        </div>
+                      ) : (
+                        value
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     );
   };
 
@@ -215,67 +236,75 @@ const BoardTab = ({ eventData, boardId }) => {
   };
 
   if (!eventData) {
-    return <div>No event data provided</div>;
+    return <div className="empty-state">No event data provided</div>;
   }
 
   if (isLoading) {
-    return <div className="loading-spinner">Loading board...</div>;
+    return (
+      <div className="loading-state">
+        <div className="spinner"></div>
+        <p>Loading board data...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="error-message">Error loading board: {error}</div>;
+    return (
+      <div className="error-state">
+        <div className="error-icon">!</div>
+        <p>Error loading board: {error}</p>
+        <button
+          className="retry-button"
+          onClick={() => boardId && loadBoard(boardId)}
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="board-tab">
+    <div className="board-container">
       <div className="board-header">
-        <h2>{eventData.name}</h2>
-        <div className="view-switcher">
-          <button
-            className={activeView === "kanban" ? "active" : ""}
-            onClick={() => setActiveView("kanban")}
-          >
-            Kanban
-          </button>
-          <button
-            className={activeView === "table" ? "active" : ""}
-            onClick={() => setActiveView("table")}
-          >
-            Table
-          </button>
+        <div className="header-left">
+          <h2 className="board-name">{eventData.name}</h2>
+          {board?.description && (
+            <p className="board-description">{board.description}</p>
+          )}
+        </div>
+        <div className="header-right">
+          <div className="view-tabs">
+            <button
+              className={`view-tab ${activeView === "kanban" ? "active" : ""}`}
+              onClick={() => setActiveView("kanban")}
+            >
+              <svg className="tab-icon" viewBox="0 0 24 24">
+                <path d="M3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2zm8 14H5v-6h6v6zm0-8H5V5h6v6zm8 8h-6v-6h6v6zm0-8h-6V5h6v6z" />
+              </svg>
+              Kanban
+            </button>
+            <button
+              className={`view-tab ${activeView === "table" ? "active" : ""}`}
+              onClick={() => setActiveView("table")}
+            >
+              <svg className="tab-icon" viewBox="0 0 24 24">
+                <path d="M3 5v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2zm8 2H5V5h6v2zm2 0h6V5h-6v2zm-2 4H5V9h6v2zm2 0h6V9h-6v2zm-2 4H5v-2h6v2zm2 0h6v-2h-6v2zm-2 4H5v-2h6v2zm2 0h6v-2h-6v2z" />
+              </svg>
+              Table
+            </button>
+          </div>
+          <div className="board-stats">
+            <span className="stat-item">
+              <strong>{board?.groups?.length || 0}</strong> Groups
+            </span>
+            <span className="stat-item">
+              <strong>{items.length}</strong> Items
+            </span>
+          </div>
         </div>
       </div>
 
-      {board ? (
-        <div className="board-content p-4 bg-white shadow rounded-md">
-        <div className="board-info mb-4">
-          <p className="text-gray-700 text-sm mb-1">
-            {board.description || "No description"}
-          </p>
-          <p className="text-gray-500 text-xs">
-            {items?.length || 0} items • {board.groups?.length || 0} groups
-          </p>
-        </div>
-      
-        {renderActiveView()}
-
-
-
-        <div className="iframe-container">
-      <h2>Embed Example</h2>
-      <iframe
-        src="https://trello.com/b/1ZBuiXdl/leave-portal"  // URL you want to embed
-        title="Example Iframe"
-        width="100%"
-        height="400"
-        style={{ border: "none" }}  // Optional: for styling purposes
-      />
-    </div>
-      </div>
-      
-      ) : (
-        <p>Board not loaded</p>
-      )}
+      <div className="board-content">{renderActiveView()}</div>
     </div>
   );
 };

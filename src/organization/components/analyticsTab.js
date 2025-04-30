@@ -686,7 +686,7 @@ const ticketAvailabilityLineChart = {
  
     
  <div className="bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Ticket Availability</h3>
+      <h3 className="text-lg font-semibold text-gray-700 mb-4">Speaker Activities</h3>
   
   <ReactApexChart 
         options={speakerActivityRadarChart.options} 
@@ -725,7 +725,7 @@ const ticketAvailabilityLineChart = {
     
     {/* Chart 7 - Takes 9/12 (75%) of the row */}
     <div className="md:col-span-9 bg-white p-6 rounded-xl shadow-md border border-gray-100 hover:shadow-lg transition-shadow duration-300">
-      <h3 className="text-lg font-semibold text-gray-700 mb-4">Speaker Activities</h3>
+      <h3 className="text-lg font-semibold text-gray-700 mb-4">Ticket Availability</h3>
     
           <ReactApexChart 
         options={ticketAvailabilityLineChart.options} 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Link } from "react-router-dom";
 
 const OrganizationSignUp = () => {
   const apiUrl = process.env.NODE_APP_API_URL; // Get the backend URL from .env
@@ -648,12 +649,20 @@ const OrganizationSignUp = () => {
                 </div>
 
                 <div className="mt-4 text-center">
-                  <p className="text-coolGray-500">
-                    Already have an account?{' '}
-                    <a href="/sign-in" className="text-[#2D1E3E] hover:underline">
-                      Sign in
-                    </a>
-                  </p>
+                   <p className="text-coolGray-600">
+                                   Already have an account?{" "}
+                                   <Link
+                                     to="/sign-up"
+                                     className="text-[#2D1E3E] font-medium hover:underline"
+                                   >
+                                     Sign up
+                                   </Link> {" | "} <Link
+                                     to="/"
+                                     className="text-[#2D1E3E] hover:underline"
+                                   >
+                                     Go back home
+                                   </Link>
+                                 </p>
                 </div>
               </form>
             </div>

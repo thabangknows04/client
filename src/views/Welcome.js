@@ -1,5 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+//import logo from 'flex-ui-assets/logos/flex-ui-green-light.svg';
+//import pana from '/images/images/pana.png';
 
 const EventLandingPage = () => {
   return (
@@ -7,14 +9,14 @@ const EventLandingPage = () => {
       {/* Header Section */}
       <section 
         className="relative bg-white overflow-hidden" 
-        style={{ backgroundImage: "url('flex-ui-assets/elements/pattern-white.svg')", backgroundPosition: 'center' }}
+      
       >
         <div className="bg-transparent">
           <nav className="flex justify-between p-6 px-4">
             <div className="flex justify-between items-center w-full">
               <div className="w-1/2 xl:w-1/3">
-                <a className="block max-w-max" href="#">
-                  <img className="h-8" src="flex-ui-assets/logos/flex-ui-green-light.svg" alt="Logo" />
+                <a className="block max-w-max " href="#">
+                  <img className="h-18 rounded-md" src="/images/logo.jpeg" alt="Logo" />
                 </a>
               </div>
               <div className="w-1/2 xl:w-1/3">
@@ -30,7 +32,7 @@ const EventLandingPage = () => {
   className="inline-block py-2 px-4 text-sm leading-5 text-green-50 bg-green-500 hover:bg-green-600 font-medium focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md"
   style={{ backgroundColor: '#2D1E3E' }}
 >
-  Sign Up
+  Sign In
 </Link>
                 </div>
               </div>
@@ -47,7 +49,7 @@ const EventLandingPage = () => {
               <nav className="relative p-6 h-full overflow-y-auto">
                 <div className="flex flex-col justify-between h-full">
                   <a className="inline-block" href="#">
-                    <img className="h-8" src="flex-ui-assets/logos/flex-ui-green-light.svg" alt="Logo" />
+                    <img className="h-18 rounded-md" src="/images/logo.jpeg" alt="Logo" />
                   </a>
                   <ul className="py-6">
                     <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Home</a></li>
@@ -62,7 +64,7 @@ const EventLandingPage = () => {
   className="inline-block py-2 px-4 w-full text-sm leading-5 text-white bg-green-500 hover:bg-green-600 font-medium text-center focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md" 
   style={{ backgroundColor: '#2D1E3E' }}
 >
-  Sign Up
+  Sign In
 </Link>
                     </div>
                   </div>
@@ -92,21 +94,30 @@ const EventLandingPage = () => {
                 </p>
                 <div className="flex flex-wrap">
                   <div className="w-full md:w-auto py-1 md:py-0 md:mr-4">
-                    <a 
+                    <Link 
+                    to="/sign-up"
                       className="inline-block py-5 px-7 w-full text-base md:text-lg leading-4 text-green-50 font-medium text-center bg-green-500 hover:bg-green-600 focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm" 
                       href="#"
                       style={{ backgroundColor: '#2D1E3E' }}
                     >
                       Get Started
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
               <div className="w-full md:w-1/2 px-4">
                 <div className="relative mx-auto md:mr-0 max-w-max">
                    <div className="relative overflow-hidden rounded-7xl">
-                    <img src="/imgs/pana.svg" alt="Event Planning" />
-                  </div>
+                   <img
+  src="/images/pana.svg"
+  alt="Event Planning"
+  style={{
+    width: '100dvw',
+    height: 'auto',
+    display: 'block',
+  }}
+/>
+</div>
                 </div>
               </div>
             </div>

@@ -155,15 +155,16 @@ const LoginPage = () => {
                   </div>
                 </div>
                 
-                <div className="mb-6">
+                <div className="mb-6 flex justify-end">
                   <button
                     type="submit"
                     style={{ backgroundColor: "#2D1E3E" }}
-                    className="inline-block w-full py-3 px-6 text-base md:text-lg leading-4 text-white font-semibold text-center hover:bg-[#3D2E4E] focus:ring-2 focus:ring-[#2D1E3E] focus:ring-opacity-50 rounded-md shadow-sm flex justify-center items-center"
+                    className="px-6 py-3 bg-main text-white rounded-md hover:bg-[#3D2E4E] focus:outline-none focus:ring-2 focus:ring-[#2D1E3E]"
+
                     disabled={isLoading}
                   >
                     {isLoading ? (
-                      <>
+                      <div className="flex items-center">
                         <svg
                           className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                           xmlns="http://www.w3.org/2000/svg"
@@ -185,7 +186,7 @@ const LoginPage = () => {
                           ></path>
                         </svg>
                         Signing In...
-                      </>
+                      </div>
                     ) : (
                       "Sign In"
                     )}
@@ -200,18 +201,15 @@ const LoginPage = () => {
                       className="text-[#2D1E3E] font-medium hover:underline"
                     >
                       Sign up
-                    </Link>
-                  </p>
-
-                  <p className="text-sm text-coolGray-500">
-                    Just browsing?{" "}
-                    <Link
+                    </Link> {" | "} <Link
                       to="/"
                       className="text-[#2D1E3E] hover:underline"
                     >
                       Go back home
                     </Link>
                   </p>
+
+            
                 </div>
               </form>
             </div>
