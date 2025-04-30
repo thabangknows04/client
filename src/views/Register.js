@@ -652,7 +652,7 @@ const OrganizationSignUp = () => {
                    <p className="text-coolGray-600">
                                    Already have an account?{" "}
                                    <Link
-                                     to="/sign-up"
+                                     to="/sign-in"
                                      className="text-[#2D1E3E] font-medium hover:underline"
                                    >
                                      Sign up
