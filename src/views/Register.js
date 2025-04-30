@@ -655,7 +655,7 @@ const OrganizationSignUp = () => {
                                      to="/sign-in"
                                      className="text-[#2D1E3E] font-medium hover:underline"
                                    >
-                                     Sign up
+                                     Sign in
                                    </Link> {" | "} <Link
                                      to="/"
                                      className="text-[#2D1E3E] hover:underline"
