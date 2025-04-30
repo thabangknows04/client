@@ -19,7 +19,7 @@ const EventLandingPage = () => {
               </div>
               <div className="w-1/2 xl:w-1/3">
                 <ul className="hidden xl:flex xl:justify-center">
-                  <li className="mr-12"><a className="text-coolGray-500 hover:text-coolGray-900 font-medium" href="#">Welcome</a></li>
+                  <li className="mr-12"><a className="text-coolGray-500 hover:text-coolGray-900 font-medium" href="#">Home</a></li>
                   <li className="mr-12"><a className="text-coolGray-500 hover:text-coolGray-900 font-medium" href="#">Why Optimus</a></li>
                 </ul>
               </div>
@@ -50,7 +50,7 @@ const EventLandingPage = () => {
                     <img className="h-8" src="flex-ui-assets/logos/flex-ui-green-light.svg" alt="Logo" />
                   </a>
                   <ul className="py-6">
-                    <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Welcome</a></li>
+                    <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Home</a></li>
                     <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Why AppName</a></li>
                   </ul>
                   <div className="flex flex-wrap">
