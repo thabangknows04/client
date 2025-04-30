@@ -7,7 +7,7 @@ export const getOrganizationUserDetails = async (user) => {
     }
 
     const response = await axios.get(
-      `https://optimus-tool.onrender.com:5011/api/organizations/get/${user._id}`
+      `https://optimus-tool.onrender.com/api/organizations/get/${user._id}`
     );
 
     if (response.status !== 200) {

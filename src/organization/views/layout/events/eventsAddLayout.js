@@ -320,7 +320,7 @@ const EventAddLayout = () => {
     };
 
     try {
-      const response = await fetch("https://optimus-tool.onrender.com:5011/api/events/add", {
+      const response = await fetch("https://optimus-tool.onrender.com/api/events/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

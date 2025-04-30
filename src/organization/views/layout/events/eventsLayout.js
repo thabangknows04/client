@@ -68,7 +68,7 @@ const EventLayout = () => {
     try {
       if (!orgId) throw new Error('Organization ID is required');
 
-      const response = await fetch(`https://optimus-tool.onrender.com:5011/api/events/get-all/${orgId}`, {
+      const response = await fetch(`https://optimus-tool.onrender.com/api/events/get-all/${orgId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +99,7 @@ const EventLayout = () => {
           label: 'Yes',
           onClick: async () => {
             try {
-              const response = await fetch(`https://optimus-tool.onrender.com:5011/api/events/delete/${eventId}`, {
+              const response = await fetch(`https://optimus-tool.onrender.com/api/events/delete/${eventId}`, {
                 method: 'DELETE',
                 headers: {
                   'Content-Type': 'application/json'
