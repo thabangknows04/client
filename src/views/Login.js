@@ -5,8 +5,6 @@ import "react-toastify/dist/ReactToastify.css";
 import { Link } from "react-router-dom";
 
 const LoginPage = () => {
-
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,9 +29,8 @@ const LoginPage = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data), // Pass the data (e.g., { username, password })
+        body: JSON.stringify(data),
       });
-  
 
       const result = await response.json();
 
@@ -88,8 +85,7 @@ const LoginPage = () => {
               Welcome Back to Your Event Dashboard
             </h1>
             <p className="mb-8 text-lg md:text-xl text-white font-medium">
-              Sign in to access your saved events, preferences, and planning
-              tools.
+              Sign in to access your saved events, preferences, and planning tools.
             </p>
             <div className="hidden md:block">
               <div className="flex items-center mt-8">
@@ -119,45 +115,51 @@ const LoginPage = () => {
           {/* Right Column (Form) */}
           <div className="w-full md:w-1/2 px-4">
             <div className="bg-white p-8 rounded-2xl shadow-xl">
+              <h2 className="text-2xl font-semibold text-[#2D1E3E] mb-6">Sign In to Your Account</h2>
+              
               <form onSubmit={handleSubmit}>
                 <div className="mb-6">
-                  <label className="block text-coolGray-800 font-medium mb-3">
+                  <label className="block text-coolGray-800 font-medium mb-2">
                     Email Address
                   </label>
                   <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-7 py-3 text-base md:text-lg border border-coolGray-200 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-coolGray-200 rounded-md focus:ring-2 focus:ring-[#2D1E3E] focus:border-transparent"
                     placeholder="your@email.com"
                     required
                   />
                 </div>
-                <div className="mb-8">
-                  <label className="block text-coolGray-800 font-medium mb-3">
+                
+                <div className="mb-6">
+                  <label className="block text-coolGray-800 font-medium mb-2">
                     Password
                   </label>
                   <input
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-7 py-3 text-base md:text-lg border border-coolGray-200 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-coolGray-200 rounded-md focus:ring-2 focus:ring-[#2D1E3E] focus:border-transparent"
                     placeholder="••••••••"
                     required
                     minLength="6"
                   />
-                  <a
-                    href="#"
-                    className="text-sm text-green-600 hover:underline mt-3 inline-block"
-                  >
-                    Forgot password?
-                  </a>
+                  <div className="flex justify-end mt-2">
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm text-[#2D1E3E] hover:underline"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
                 </div>
+                
                 <div className="mb-6">
                   <button
                     type="submit"
                     style={{ backgroundColor: "#2D1E3E" }}
-                    className="inline-block w-full py-5 px-7 text-base md:text-lg leading-4 text-white font-medium text-center hover:bg-[#2D1E3E] focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 rounded-md shadow-sm flex justify-center items-center"
+                    className="inline-block w-full py-3 px-6 text-base md:text-lg leading-4 text-white font-semibold text-center hover:bg-[#3D2E4E] focus:ring-2 focus:ring-[#2D1E3E] focus:ring-opacity-50 rounded-md shadow-sm flex justify-center items-center"
                     disabled={isLoading}
                   >
                     {isLoading ? (
@@ -182,19 +184,20 @@ const LoginPage = () => {
                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                           ></path>
                         </svg>
-                        Processing...
+                        Signing In...
                       </>
                     ) : (
                       "Sign In"
                     )}
                   </button>
                 </div>
-                <div className="text-center space-y-2">
-                  <p className="text-coolGray-500">
+                
+                <div className="text-center space-y-3">
+                  <p className="text-coolGray-600">
                     Don't have an account?{" "}
                     <Link
                       to="/sign-up"
-                      className="text-green-600 hover:underline"
+                      className="text-[#2D1E3E] font-medium hover:underline"
                     >
                       Sign up
                     </Link>
@@ -204,8 +207,7 @@ const LoginPage = () => {
                     Just browsing?{" "}
                     <Link
                       to="/"
-                      className="text-blue-600 hover:underline"
-                      
+                      className="text-[#2D1E3E] hover:underline"
                     >
                       Go back home
                     </Link>

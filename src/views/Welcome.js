@@ -51,7 +51,7 @@ const EventLandingPage = () => {
                   </a>
                   <ul className="py-6">
                     <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Home</a></li>
-                    <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Why AppName</a></li>
+                    <li><a className="block py-3 px-4 text-coolGray-500 hover:text-coolGray-900 font-medium hover:bg-coolGray-50 rounded-md" href="#">Why Optimus</a></li>
                   </ul>
                   <div className="flex flex-wrap">
                     <div className="w-full">
@@ -131,7 +131,7 @@ const EventLandingPage = () => {
               className="inline-block py-3 px-7 w-full md:w-auto text-lg leading-7 text-[#2D1E3E] bg-white hover:bg-green-600 font-medium text-center focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 border border-transparent rounded-md shadow-sm" 
               href="#"
             >
-              Get Started
+              Learn More
             </a>
           </div>
         </div>
