@@ -165,7 +165,7 @@ const OrganizationSignUp = () => {
 
       console.log(submitData);
       
-      const response = await fetch(`http:localhost:5011/api/organizations/add`, {
+      const response = await fetch(`https://optimus-tool.onrender.com//api/organizations/add`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
